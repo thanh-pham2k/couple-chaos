@@ -1,38 +1,92 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=12 format=3]
 
-[ext_resource type="Texture2D" path="res://assets/furniture/modular/front_bed/frame.png" id="1"]
-[ext_resource type="Texture2D" path="res://assets/furniture/modular/front_bed/mattress.png" id="2"]
-[ext_resource type="Texture2D" path="res://assets/furniture/modular/front_bed/blanket.png" id="3"]
-[ext_resource type="Texture2D" path="res://assets/furniture/modular/front_bed/pillows.png" id="4"]
-[ext_resource type="Texture2D" path="res://assets/furniture/modular/front_bed/cat_pillow.png" id="5"]
+[ext_resource type="Script" path="res://scripts/bed_interaction.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/furniture/modular/front_bed/frame.png" id="1_frame"]
+[ext_resource type="Texture2D" path="res://assets/furniture/modular/front_bed/mattress.png" id="2_mattress"]
+[ext_resource type="Texture2D" path="res://assets/furniture/modular/front_bed/blanket.png" id="3_blanket"]
+[ext_resource type="Texture2D" path="res://assets/furniture/modular/front_bed/pillows.png" id="4_pillows"]
+[ext_resource type="Texture2D" path="res://assets/furniture/modular/front_bed/cat_pillow.png" id="5_cat"]
+[ext_resource type="Texture2D" path="res://assets/characters/boy/animations/boy_sleep_sheet.png" id="6_boy_sleep"]
+[ext_resource type="Texture2D" path="res://assets/characters/girl/animations/girl_sleep_sheet.png" id="7_girl_sleep"]
+[ext_resource type="Texture2D" path="res://assets/furniture/bed_blanket_overlay.png" id="8_blanket_overlay"]
 
 [sub_resource type="RectangleShape2D" id="BedFootprint"]
 size = Vector2(210, 130)
 
+[sub_resource type="RectangleShape2D" id="InteractionShape"]
+size = Vector2(270, 150)
+
 [node name="Bed" type="StaticBody2D"]
 collision_layer = 1
 collision_mask = 2
+script = ExtResource("1_script")
 
 [node name="Frame" type="Sprite2D" parent="."]
 position = Vector2(0, -109)
-texture = ExtResource("1")
+texture = ExtResource("1_frame")
 
 [node name="Mattress" type="Sprite2D" parent="."]
 position = Vector2(0, -100)
-texture = ExtResource("2")
+texture = ExtResource("2_mattress")
 
 [node name="Blanket" type="Sprite2D" parent="."]
 position = Vector2(0, -73)
-texture = ExtResource("3")
+texture = ExtResource("3_blanket")
 
 [node name="Pillows" type="Sprite2D" parent="."]
 position = Vector2(0, -159)
-texture = ExtResource("4")
+texture = ExtResource("4_pillows")
 
 [node name="CatPillow" type="Sprite2D" parent="."]
 position = Vector2(16, -158)
-texture = ExtResource("5")
+texture = ExtResource("5_cat")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 position = Vector2(0, -65)
 shape = SubResource("BedFootprint")
+
+[node name="SlotBoy" type="Marker2D" parent="."]
+position = Vector2(-48, -125)
+
+[node name="SlotGirl" type="Marker2D" parent="."]
+position = Vector2(48, -125)
+
+[node name="BoyBedSprite" type="Sprite2D" parent="."]
+visible = false
+z_index = 1
+position = Vector2(-48, -125)
+scale = Vector2(0.95, 0.95)
+texture = ExtResource("6_boy_sleep")
+hframes = 6
+
+[node name="GirlBedSprite" type="Sprite2D" parent="."]
+visible = false
+z_index = 1
+position = Vector2(48, -125)
+scale = Vector2(0.95, 0.95)
+texture = ExtResource("7_girl_sleep")
+hframes = 6
+
+[node name="BlanketOverlay" type="Sprite2D" parent="."]
+z_index = 2
+position = Vector2(0, -68)
+texture = ExtResource("8_blanket_overlay")
+
+[node name="InteractionArea" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="InteractionArea"]
+position = Vector2(0, -50)
+shape = SubResource("InteractionShape")
+
+[node name="PromptLabel" type="Label" parent="."]
+z_index = 5
+position = Vector2(-150, -210)
+size = Vector2(300, 30)
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(1, 0.92, 0.4, 1)
+theme_override_colors/font_outline_color = Color(0.2, 0.12, 0.08, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 18
+text = "[E] NẰM NGỦ"

@@ -23,8 +23,8 @@ func _ready() -> void:
 	assert(pillow_1_zone != null and pillow_2_zone != null, "Pillow zones must exist")
 	assert(mop_zone != null, "Mop return station must exist")
 	var sofa := game.arena.get_node("YSortArena/Sofa") as Node2D
-	var expected_left: Vector2 = sofa.get_node("PillowSlotLeft").global_position if sofa.has_node("PillowSlotLeft") else sofa.to_global(Vector2(-55, -55))
-	var expected_right: Vector2 = sofa.get_node("PillowSlotRight").global_position if sofa.has_node("PillowSlotRight") else sofa.to_global(Vector2(55, -55))
+	var expected_left: Vector2 = sofa.get_node("PillowSlotLeft").global_position if sofa.has_node("PillowSlotLeft") else sofa.to_global(Vector2(-58, -64))
+	var expected_right: Vector2 = sofa.get_node("PillowSlotRight").global_position if sofa.has_node("PillowSlotRight") else sofa.to_global(Vector2(58, -64))
 	assert(pillow_1_zone.position == expected_left, "Pillow 1 must align with sofa anchor PillowSlotLeft on cushion")
 	assert(pillow_2_zone.position == expected_right, "Pillow 2 must align with sofa anchor PillowSlotRight on cushion")
 	assert(pillow_1_zone.marker.visible and pillow_2_zone.marker.visible, "Markers must be visible before placement")

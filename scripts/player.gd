@@ -27,6 +27,7 @@ var dash_timer: float = 0.0
 var dash_dir: Vector2 = Vector2.RIGHT
 
 var is_placing: bool = false
+var is_sleeping: bool = false
 var is_scrubbing_mop: bool = false
 var is_attacking: bool = false
 var attack_timer: float = 0.0
@@ -252,7 +253,29 @@ func end_place_animation() -> void:
 		else:
 			update_sprite_pose("idle")
 
+func get_bed_interaction() -> Node:
+	var beds = get_tree().get_nodes_in_group("bed_interaction")
+	for b in beds:
+		if is_instance_valid(b) and not b.is_queued_for_deletion():
+			return b
+	return null
+
 func _physics_process(delta: float) -> void:
+	if is_sleeping:
+		velocity = Vector2.ZERO
+		var prefix = player_id + "_"
+		var wake_requested := false
+		if Input.is_action_just_pressed(prefix + "grab") or Input.is_action_just_pressed(prefix + "attack") or Input.is_action_just_pressed(prefix + "dash"):
+			wake_requested = true
+		elif player_id == "p1" and Input.is_action_just_pressed("ui_accept"):
+			wake_requested = true
+		
+		if wake_requested:
+			var bed = get_bed_interaction()
+			if bed and bed.has_method("try_interact"):
+				bed.try_interact(self)
+		return
+
 	# 1. Regenerate stamina
 	if not is_dashing and stamina < STAMINA_MAX:
 		stamina = min(STAMINA_MAX, stamina + STAMINA_REGEN * delta)
@@ -542,8 +565,31 @@ func read_input() -> void:
 	elif grab_pressed:
 		trigger_grab()
 
+func _unhandled_input(event: InputEvent) -> void:
+	if not is_sleeping:
+		return
+	if not event.is_pressed() or event.is_echo():
+		return
+	var prefix = player_id + "_"
+	var is_wake_key := false
+	if event.is_action_pressed(prefix + "grab") or event.is_action_pressed(prefix + "attack") or event.is_action_pressed(prefix + "dash"):
+		is_wake_key = true
+	elif event is InputEventKey:
+		var key = event.physical_keycode if event.physical_keycode != 0 else event.keycode
+		if player_id == "p1" and (key == KEY_E or key == KEY_F or key == KEY_SPACE):
+			is_wake_key = true
+		elif player_id == "p2" and (key == KEY_J or key == KEY_K or key == KEY_ENTER):
+			is_wake_key = true
+	
+	if is_wake_key:
+		var bed = get_bed_interaction()
+		if bed and bed.has_method("try_interact"):
+			bed.try_interact(self)
+			if get_viewport():
+				get_viewport().set_input_as_handled()
+
 func trigger_dash() -> void:
-	if is_placing or is_dashing or is_stunned or is_slipping or is_attacking or knockback_state != KnockbackState.NONE:
+	if is_sleeping or is_placing or is_dashing or is_stunned or is_slipping or is_attacking or knockback_state != KnockbackState.NONE:
 		return
 	if stamina < DASH_COST:
 		return
@@ -559,7 +605,7 @@ func trigger_dash() -> void:
 	spawn_vfx_in_world("dash_smoke", global_position + Vector2(0, -10))
 
 func trigger_attack() -> void:
-	if is_placing or is_stunned or is_slipping or is_attacking or is_dashing or knockback_state != KnockbackState.NONE:
+	if is_sleeping or is_placing or is_stunned or is_slipping or is_attacking or is_dashing or knockback_state != KnockbackState.NONE:
 		return
 	var session := get_tree().get_first_node_in_group("coop_session")
 	if session and session.has_method("try_use") and session.try_use(self):
@@ -675,7 +721,15 @@ func play_mop_scrub_animation(target_pos: Vector2) -> void:
 	)
 
 func trigger_grab() -> void:
+	if is_sleeping:
+		var bed := get_tree().get_first_node_in_group("bed_interaction")
+		if bed and bed.has_method("try_interact"):
+			bed.try_interact(self)
+		return
 	if is_placing or is_stunned or is_slipping or is_attacking or is_throwing or knockback_state != KnockbackState.NONE:
+		return
+	var bed := get_tree().get_first_node_in_group("bed_interaction")
+	if bed and bed.has_method("try_interact") and bed.try_interact(self):
 		return
 	var session := get_tree().get_first_node_in_group("coop_session")
 	if session and session.has_method("try_interact") and session.try_interact(self):
@@ -891,20 +945,30 @@ func trigger_slow() -> void:
 	slow_timer = 2.0
 
 func find_and_pickup_item() -> void:
-	var items = get_tree().get_nodes_in_group("items")
-	var closest_item: Node2D = null
-	var closest_dist: float = 120.0
-	for it in items:
+	var candidates: Array = []
+	for it in get_tree().get_nodes_in_group("items"):
 		if is_instance_valid(it) and not it.is_queued_for_deletion() and it is Area2D and it.has_method("get_item_type"):
-			var d = global_position.distance_to(it.global_position)
-			if d < closest_dist:
-				closest_dist = d
-				closest_item = it
+			candidates.append(it)
+	for hz in get_tree().get_nodes_in_group("hazards"):
+		if is_instance_valid(hz) and not hz.is_queued_for_deletion() and hz is Area2D:
+			if hz.has_method("can_be_picked_up") and hz.can_be_picked_up():
+				candidates.append(hz)
 
-	if closest_item:
-		var type = closest_item.get_item_type()
+	var closest_node: Node2D = null
+	var closest_dist: float = 120.0
+	for node in candidates:
+		var d = global_position.distance_to(node.global_position)
+		if d < closest_dist:
+			closest_dist = d
+			closest_node = node
+
+	if closest_node:
+		var type = closest_node.get_item_type()
 		pick_up(type)
-		closest_item.queue_free()
+		if closest_node is FloorHazard:
+			closest_node.set_deferred("monitoring", false)
+			closest_node.set_deferred("monitorable", false)
+		closest_node.queue_free()
 
 func spawn_item_in_world(type: String, pos: Vector2) -> void:
 	var item_scene = load("res://scenes/item.tscn")

@@ -316,6 +316,17 @@ func try_use(player: Player) -> bool:
 			else:
 				hint.text = "Đang lau sạch: %d/3 💦" % spot.progress
 			return true
+	if is_instance_valid(arena):
+		var tree := arena.get_tree()
+		var hazards := tree.get_nodes_in_group("hazards") if tree else []
+		for hazard in hazards:
+			if hazard is FloorHazard and hazard.state != "clean" and hazard.global_position.distance_to(player.global_position) <= 120.0:
+				if hazard.scrub(player):
+					if hazard.state == "clean":
+						hint.text = "Đã lau sạch vũng trà sữa bẫy! ✨"
+					else:
+						hint.text = "Đang lau sạch: %d/3 💦" % hazard.progress
+					return true
 	player.play_mop_scrub_animation(player.global_position + player.facing_direction * 40.0)
 	hint.text = "Mang cây lau tới gần vết bẩn rồi nhấn F / K để lau sàn."
 	return true
@@ -379,13 +390,13 @@ func _setup_world() -> void:
 	_add_zone(world, "trash", ["coop_trash", "box", "banana", "popcorn", "boba"], "store", Vector2(1510, 415), "res://assets/coop/advanced/trash_bin_anim.png")
 	_add_zone(world, "basket", ["coop_gamepad", "gamepad", "pillow", "wallet", "hammer"], "store", Vector2(380, 455), "res://assets/coop/basket.png")
 	var sofa := world.get_node_or_null("Sofa") as Node2D
-	var pillow_1_pos := Vector2(565, 435)
-	var pillow_2_pos := Vector2(675, 435)
+	var pillow_1_pos := Vector2(562, 426)
+	var pillow_2_pos := Vector2(678, 426)
 	if is_instance_valid(sofa):
 		var slot_l := sofa.get_node_or_null("PillowSlotLeft") as Marker2D
 		var slot_r := sofa.get_node_or_null("PillowSlotRight") as Marker2D
-		pillow_1_pos = slot_l.global_position if slot_l else sofa.to_global(Vector2(-55, -55))
-		pillow_2_pos = slot_r.global_position if slot_r else sofa.to_global(Vector2(55, -55))
+		pillow_1_pos = slot_l.global_position if slot_l else sofa.to_global(Vector2(-58, -64))
+		pillow_2_pos = slot_r.global_position if slot_r else sofa.to_global(Vector2(58, -64))
 	_add_zone(world, "pillow_1", ["coop_pillow_1", "coop_pillow_2"], "pillow", pillow_1_pos, "")
 	_add_zone(world, "pillow_2", ["coop_pillow_1", "coop_pillow_2"], "pillow", pillow_2_pos, "")
 	_add_zone(world, "mop_station", ["coop_mop"], "clean", Vector2(1400, 270), "res://assets/coop/advanced/mop_rack.png")

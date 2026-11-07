@@ -32,7 +32,7 @@ func _ready() -> void:
 	
 	marker = Sprite2D.new()
 	marker.name = "DropZoneMarker"
-	marker.z_index = 1 if category == "pillow" else -1
+	marker.z_index = 0 if category == "pillow" else -1
 	add_child(marker)
 	
 	if not prop_path.is_empty():
@@ -151,6 +151,8 @@ func refresh() -> void:
 				action_name = "LẤY CÂY LAU"
 			elif target_id == "basket" and correct_item == "coop_gamepad":
 				action_name = "CẤT TAY CẦM"
+			elif target_id == "trash":
+				action_name = "VỨT RÁC"
 			elif target_id == "mop_station":
 				action_name = "CẤT CÂY LAU"
 			elif category == "pillow":
@@ -248,9 +250,9 @@ func accept(player: Player) -> bool:
 		pillow.name = "PlacedPillow"
 		var pillow_texture_path := "res://assets/coop/advanced/sofa_pillow_1.png" if target_id == "pillow_1" else "res://assets/coop/advanced/sofa_pillow_2.png"
 		pillow.texture = load(pillow_texture_path)
-		pillow.scale = Vector2(1.0, 1.0)
+		pillow.scale = Vector2(0.68, 0.68)
 		pillow.position = Vector2(0, 0)
-		pillow.z_index = 1
+		pillow.z_index = 0
 		add_child(pillow)
 		CoopVisualFeedback.play_success_fx(get_parent(), global_position, "place_success_fx")
 	elif target_id == "remote":

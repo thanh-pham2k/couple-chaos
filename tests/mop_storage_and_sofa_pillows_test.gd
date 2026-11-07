@@ -46,15 +46,21 @@ func _ready() -> void:
 	# 4. SOFA PILLOW ANCHORS & SEAT GEOMETRY
 	var sofa := game.arena.get_node("YSortArena/Sofa") as Node2D
 	assert(sofa != null, "Sofa must exist")
+	var sofa_back := game.arena.get_node("YSortArena/SofaBack") as Sprite2D
+	assert(sofa_back != null, "SofaBack must exist for natural backrest/cushion Y-sort layer")
+	assert(sofa_back.position.y == 410.0, "SofaBack must be at y=410 to render under pillows")
+	assert(sofa_back.texture.resource_path.ends_with("sofa_back_cushion.png"), "SofaBack must use sofa_back_cushion.png")
+	assert(sofa.get_node("Sprite2D").texture.resource_path.ends_with("sofa_front.png"), "Sofa front must use sofa_front.png to occlude pillows")
+
 	var slot_l := sofa.get_node("PillowSlotLeft") as Marker2D
 	var slot_r := sofa.get_node("PillowSlotRight") as Marker2D
 	assert(slot_l != null and slot_r != null, "Sofa must have PillowSlotLeft and PillowSlotRight anchor markers")
-	assert(slot_l.position == Vector2(-55, -55), "PillowSlotLeft must be at (-55, -55) on seat cushion")
-	assert(slot_r.position == Vector2(55, -55), "PillowSlotRight must be at (55, -55) on seat cushion")
+	assert(slot_l.position == Vector2(-58, -64), "PillowSlotLeft must be at (-58, -64) on seat cushion")
+	assert(slot_r.position == Vector2(58, -64), "PillowSlotRight must be at (58, -64) on seat cushion")
 	assert(pillow_1_zone.position == sofa.to_global(slot_l.position), "Pillow 1 zone must align with PillowSlotLeft")
 	assert(pillow_2_zone.position == sofa.to_global(slot_r.position), "Pillow 2 zone must align with PillowSlotRight")
-	assert(pillow_1_zone.position.y == 435.0, "Pillow 1 must sit on seat cushion at y=435, not on backrest or floor")
-	assert(pillow_2_zone.position.y == 435.0, "Pillow 2 must sit on seat cushion at y=435, not on backrest or floor")
+	assert(pillow_1_zone.position.y == 426.0, "Pillow 1 must sit on seat cushion at y=426, not on backrest or floor")
+	assert(pillow_2_zone.position.y == 426.0, "Pillow 2 must sit on seat cushion at y=426, not on backrest or floor")
 
 	# 5. TEST BOY (P1) PICKUP, CARRY & PLACE PILLOW 1
 	p1.pick_up("coop_pillow_1")
@@ -69,8 +75,8 @@ func _ready() -> void:
 	assert(not pillow_1_zone.marker.visible, "Placement marker must be hidden once completed")
 	var placed_p1 := pillow_1_zone.get_node_or_null("PlacedPillow") as Sprite2D
 	assert(placed_p1 != null, "PlacedPillow node must be added to slot")
-	assert(placed_p1.z_index == 1, "Placed pillow z_index must be 1 to layer over sofa seat")
-	assert(placed_p1.scale == Vector2.ONE, "Placed pillow scale must be Vector2.ONE")
+	assert(placed_p1.z_index == 0, "Placed pillow z_index must be 0 for natural Y-sort occlusion under sofa front")
+	assert(placed_p1.scale == Vector2(0.68, 0.68), "Placed pillow scale must be reduced to Vector2(0.68, 0.68)")
 	game._physics_process(game.PLACE_DURATION)
 	assert(not p1.is_placing, "P1 placement animation must end")
 	assert(game.quest.get_count("pillow") == 1, "Pillow quest count must be 1/2")
@@ -84,7 +90,8 @@ func _ready() -> void:
 	assert(p2.held_item_type.is_empty(), "P2 hand must be empty after release")
 	assert(pillow_2_zone.completed, "Pillow 2 zone must be completed")
 	var placed_p2 := pillow_2_zone.get_node_or_null("PlacedPillow") as Sprite2D
-	assert(placed_p2 != null and placed_p2.z_index == 1, "Pillow 2 must be placed with z_index 1")
+	assert(placed_p2 != null and placed_p2.z_index == 0, "Pillow 2 must be placed with z_index 0")
+	assert(placed_p2.scale == Vector2(0.68, 0.68), "Pillow 2 scale must be Vector2(0.68, 0.68)")
 	game._physics_process(game.PLACE_DURATION)
 	assert(game.quest.get_count("pillow") == 2, "Pillow quest count must be 2/2")
 

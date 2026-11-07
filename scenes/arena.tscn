@@ -27,6 +27,12 @@
 [ext_resource type="PackedScene" path="res://scenes/door_modular.tscn" id="24_door"]
 [ext_resource type="PackedScene" path="res://scenes/aircon_front.tscn" id="25_aircon"]
 [ext_resource type="PackedScene" path="res://scenes/fridge_front.tscn" id="26_fridge"]
+[ext_resource type="Texture2D" path="res://assets/furniture/sofa_back_cushion.png" id="27_sofa_back"]
+[ext_resource type="Texture2D" path="res://assets/furniture/sofa_front.png" id="28_sofa_front"]
+[ext_resource type="Texture2D" path="res://assets/furniture/coffee_table_front.png" id="29_table_front"]
+[ext_resource type="Texture2D" path="res://assets/furniture/dining_table.png" id="30_dining_table"]
+[ext_resource type="Texture2D" path="res://assets/furniture/dining_chair_left.png" id="31_chair_left"]
+[ext_resource type="Texture2D" path="res://assets/furniture/dining_chair_right.png" id="32_chair_right"]
 
 [sub_resource type="AtlasTexture" id="WallPatch"]
 atlas = ExtResource("2_bg")
@@ -43,6 +49,15 @@ size = Vector2(230, 45)
 
 [sub_resource type="RectangleShape2D" id="Shape_Table"]
 size = Vector2(120, 30)
+
+[sub_resource type="RectangleShape2D" id="Shape_CoffeeTableFront"]
+size = Vector2(145, 36)
+
+[sub_resource type="RectangleShape2D" id="Shape_DiningChair"]
+size = Vector2(65, 35)
+
+[sub_resource type="RectangleShape2D" id="Shape_DiningTable"]
+size = Vector2(140, 42)
 
 [sub_resource type="RectangleShape2D" id="Shape_Desk"]
 size = Vector2(160, 45)
@@ -148,12 +163,16 @@ collision_layer = 1
 collision_mask = 2
 
 [node name="Sprite2D" type="Sprite2D" parent="YSortArena/CoffeeTable"]
-position = Vector2(0, -45)
-texture = ExtResource("10_table")
+position = Vector2(0, -56)
+texture = ExtResource("29_table_front")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="YSortArena/CoffeeTable"]
-position = Vector2(0, -15)
-shape = SubResource("Shape_Table")
+position = Vector2(0, -18)
+shape = SubResource("Shape_CoffeeTableFront")
+
+[node name="SofaBack" type="Sprite2D" parent="YSortArena"]
+position = Vector2(620, 410)
+texture = ExtResource("27_sofa_back")
 
 [node name="Sofa" type="StaticBody2D" parent="YSortArena"]
 position = Vector2(620, 490)
@@ -162,17 +181,17 @@ collision_mask = 2
 
 [node name="Sprite2D" type="Sprite2D" parent="YSortArena/Sofa"]
 position = Vector2(0, -80)
-texture = ExtResource("9_sofa")
+texture = ExtResource("28_sofa_front")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="YSortArena/Sofa"]
 position = Vector2(0, -22)
 shape = SubResource("Shape_Sofa")
 
 [node name="PillowSlotLeft" type="Marker2D" parent="YSortArena/Sofa"]
-position = Vector2(-55, -55)
+position = Vector2(-58, -64)
 
 [node name="PillowSlotRight" type="Marker2D" parent="YSortArena/Sofa"]
-position = Vector2(55, -55)
+position = Vector2(58, -64)
 
 [node name="Bed" parent="YSortArena" instance=ExtResource("23_bed")]
 position = Vector2(240, 840)
@@ -189,12 +208,38 @@ collision_layer = 1
 collision_mask = 2
 
 [node name="Sprite2D" type="Sprite2D" parent="YSortArena/DiningSet"]
-position = Vector2(0, -70)
-texture = ExtResource("18_dining")
+position = Vector2(0, -84)
+texture = ExtResource("30_dining_table")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="YSortArena/DiningSet"]
-position = Vector2(0, -22)
-shape = SubResource("Shape_Desk")
+position = Vector2(0, -21)
+shape = SubResource("Shape_DiningTable")
+
+[node name="DiningChairLeft" type="StaticBody2D" parent="YSortArena"]
+position = Vector2(1545, 550)
+collision_layer = 1
+collision_mask = 2
+
+[node name="Sprite2D" type="Sprite2D" parent="YSortArena/DiningChairLeft"]
+position = Vector2(0, -75)
+texture = ExtResource("31_chair_left")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="YSortArena/DiningChairLeft"]
+position = Vector2(0, -17)
+shape = SubResource("Shape_DiningChair")
+
+[node name="DiningChairRight" type="StaticBody2D" parent="YSortArena"]
+position = Vector2(1735, 550)
+collision_layer = 1
+collision_mask = 2
+
+[node name="Sprite2D" type="Sprite2D" parent="YSortArena/DiningChairRight"]
+position = Vector2(0, -75)
+texture = ExtResource("32_chair_right")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="YSortArena/DiningChairRight"]
+position = Vector2(0, -17)
+shape = SubResource("Shape_DiningChair")
 
 [node name="Player1" parent="YSortArena" instance=ExtResource("3_player")]
 position = Vector2(580, 680)
