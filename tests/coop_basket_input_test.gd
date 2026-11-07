@@ -49,7 +49,7 @@ func _ready() -> void:
 		await get_tree().physics_frame
 		await get_tree().physics_frame
 		_key(KEY_E if id == "p1" else KEY_J, false)
-		await get_tree().physics_frame
+		for f in range(25): await get_tree().physics_frame
 		assert(basket.completed and player.held_item_type.is_empty(), "%s must place the quest gamepad in the basket" % id)
 		assert(game.quest.get_count("store") == 1, "Deposit must count exactly once")
 

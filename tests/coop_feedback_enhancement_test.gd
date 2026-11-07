@@ -22,8 +22,11 @@ func _ready() -> void:
 		
 	assert(pillow_1_zone != null and pillow_2_zone != null, "Pillow zones must exist")
 	assert(mop_zone != null, "Mop return station must exist")
-	assert(pillow_1_zone.position == Vector2(565, 435), "Pillow 1 must align with left sofa seat cushion")
-	assert(pillow_2_zone.position == Vector2(675, 435), "Pillow 2 must align with right sofa seat cushion")
+	var sofa := game.arena.get_node("YSortArena/Sofa") as Node2D
+	var expected_left: Vector2 = sofa.get_node("PillowSlotLeft").global_position if sofa.has_node("PillowSlotLeft") else sofa.to_global(Vector2(-55, -55))
+	var expected_right: Vector2 = sofa.get_node("PillowSlotRight").global_position if sofa.has_node("PillowSlotRight") else sofa.to_global(Vector2(55, -55))
+	assert(pillow_1_zone.position == expected_left, "Pillow 1 must align with sofa anchor PillowSlotLeft on cushion")
+	assert(pillow_2_zone.position == expected_right, "Pillow 2 must align with sofa anchor PillowSlotRight on cushion")
 	assert(pillow_1_zone.marker.visible and pillow_2_zone.marker.visible, "Markers must be visible before placement")
 	
 	# Place Pillow 1
@@ -44,6 +47,8 @@ func _ready() -> void:
 	p1.pick_up("coop_mop")
 	assert(p1.held_item_type == "coop_mop")
 	assert(not mop_zone.can_accept(p1.held_item_type), "Mop station must not accept mop before cleaning is done")
+	if not mop_zone.nearby.has(p1):
+		mop_zone._on_body_entered(p1)
 	mop_zone.refresh()
 	assert(mop_zone.prompt.text.begins_with("HÃY LAU SÀN TRƯỚC"), "Prompt must instruct players to clean first")
 	
@@ -73,7 +78,18 @@ func _ready() -> void:
 	game.try_use(p1)
 	game.try_use(p1)
 	assert(spot2.state == "clean", "Spot 2 must be clean")
-	assert(game.quest.get_count("clean") == 2, "Clean quest category must be 2/2")
+	assert(game.quest.get_count("clean") == 2, "Clean quest category must be 2/4")
+	assert(not mop_zone.can_accept(p1.held_item_type), "Mop station must not accept mop when only 2/4 stains are clean")
+
+	# Complete spots 3 and 4 (3/3 each)
+	for s_idx in [2, 3]:
+		var s: CleaningSpot = game.spots[s_idx]
+		p1.global_position = s.global_position + Vector2(0, 40)
+		game.try_use(p1)
+		game.try_use(p1)
+		game.try_use(p1)
+		assert(s.state == "clean", "Spot %d must be clean" % (s_idx + 1))
+	assert(game.quest.get_count("clean") == 4, "Clean quest category must be 4/4")
 	
 	# 4. Test Mop Return Station Active after cleaning
 	p1.global_position = mop_zone.global_position + Vector2(0, 40)

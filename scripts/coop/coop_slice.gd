@@ -73,7 +73,7 @@ func restart_round() -> void:
 	_set_players_enabled(false)
 	_update_hud()
 	overlay_title.text = "5 phút trước khi khách đến!"
-	overlay_details.text = "Cất 3 món • Lau 2 vết bẩn • Đặt lại 2 chiếc gối\n\nKhông cần theo thứ tự: remote → TV, tay cầm → giỏ, hộp → thùng\nGối → sofa, cây lau → vết bẩn (F / K)\nE / J: nhặt, đặt hoặc ném\nSpace / Enter: lướt  •  Cả hai cùng hoàn thành nhé!"
+	overlay_details.text = "Cất 3 món • Lau 4 vết bẩn • Đặt lại 2 chiếc gối • Cất cây lau\n\nKhông cần theo thứ tự: remote → TV, tay cầm → giỏ, hộp → thùng\nGối → sofa, cây lau → vết bẩn (F / K)\nE / J: nhặt, đặt hoặc ném\nSpace / Enter: lướt  •  Cả hai cùng hoàn thành nhé!"
 	start_button.text = "Bắt đầu"
 	overlay.visible = true
 
@@ -91,7 +91,46 @@ func _on_started() -> void:
 	hint.text = "E / 🖐: nhặt hoặc đặt • Tay cầm → giỏ | Remote → TV | Hộp → thùng rác"
 
 func _on_completed() -> void:
-	session.finish(true)
+	check_room_completion()
+
+func is_room_clean() -> bool:
+	if not quest or not quest.is_all_goals_met():
+		return false
+	for spot in spots:
+		if is_instance_valid(spot) and spot.state != "clean":
+			return false
+	var mop_returned := false
+	for zone in zones:
+		if is_instance_valid(zone) and zone.target_id == "mop_station":
+			if zone.completed:
+				mop_returned = true
+			break
+	if not mop_returned:
+		return false
+	if is_instance_valid(arena):
+		for player in [arena.p1, arena.p2]:
+			if is_instance_valid(player) and player.held_item_type.begins_with("coop_"):
+				return false
+	if not pending_placements.is_empty():
+		return false
+	return true
+
+func check_room_completion() -> void:
+	if not session or not session.running or quest.finished:
+		return
+	if is_room_clean():
+		quest.finished = true
+		_cleanup_remaining_hazards()
+		session.finish(true)
+
+func _cleanup_remaining_hazards() -> void:
+	if not is_instance_valid(arena): return
+	var world := arena.get_node_or_null("YSortArena")
+	if not world: return
+	for child in world.get_children():
+		if child is FloorHazard or child is ItemPickup:
+			world.remove_child(child)
+			child.queue_free()
 
 func _on_ended(won: bool) -> void:
 	_cancel_all_placements()
@@ -140,6 +179,14 @@ func _update_held_hint() -> void:
 		"coop_gamepad": "Tay cầm → giỏ",
 		"coop_pillow_1": "Gối → sofa", "coop_pillow_2": "Gối → sofa",
 		"coop_mop": "Cây lau → vết bẩn, nhấn F/K",
+		"hammer": "Búa đồ chơi → cất vào giỏ",
+		"wallet": "Ví tiền → cất vào giỏ",
+		"pillow": "Gối phụ → cất vào giỏ",
+		"gamepad": "Tay cầm phụ → cất vào giỏ",
+		"banana": "Vỏ chuối/chuối → vứt vào thùng rác",
+		"popcorn": "Bỏng ngô → vứt vào thùng rác",
+		"boba": "Cốc trà sữa → vứt vào thùng rác",
+		"box": "Hộp các-tông → vứt vào thùng rác",
 	}
 	var messages: Array[String] = []
 	for player in [arena.p1, arena.p2]:
@@ -150,12 +197,19 @@ func _update_held_hint() -> void:
 func try_interact(player: Player) -> bool:
 	if not session.running: return true
 	if pending_placements.has(player): return true
-	if player.held_item_type.is_empty(): return false
+	if player.held_item_type.is_empty():
+		for zone in zones:
+			if zone.target_id == "mop_station" and zone.completed and zone.global_position.distance_to(player.global_position) <= zone.INTERACTION_RADIUS:
+				if zone.retrieve_mop(player):
+					hint.text = "Đã lấy lại cây lau sàn!"
+					return true
+		return false
 	
 	if player.held_item_type == "coop_mop":
 		for zone in zones:
 			if zone.target_id == "mop_station" and zone.global_position.distance_to(player.global_position) <= zone.INTERACTION_RADIUS:
-				if quest.get_count("clean") < 2:
+				var clean_goal: int = quest.get_goal("clean") if quest.has_method("get_goal") else 4
+				if quest.get_count("clean") < clean_goal:
 					hint.text = "Còn vết bẩn chưa lau xong! Hãy lau sạch sàn trước khi cất cây lau."
 					return true
 				_begin_placement(player, zone)
@@ -232,6 +286,7 @@ func _physics_process(delta: float) -> void:
 		if pending_placements.has(player) and pending["elapsed"] >= PLACE_DURATION:
 			pending_placements.erase(player)
 			player.end_place_animation()
+			check_room_completion()
 
 func _animate_placed_item(texture: Texture2D, origin: Vector2, zone: CoopDropZone) -> void:
 	if not texture or not is_instance_valid(arena):
@@ -267,20 +322,30 @@ func try_use(player: Player) -> bool:
 
 func _on_deposited(category: String, id: String, _player: Player) -> void:
 	if id == "coop_mop":
-		hint.text = "Đã cất cây lau sàn gọn gàng về chỗ cũ! ✨"
+		hint.text = "Đã cất cây lau sàn gọn gàng lên giá bếp! ✨"
 	elif quest.complete_target(category, id):
 		hint.text = "Đúng chỗ rồi! ✨"
+	check_room_completion()
 
-func _on_stored_extra(_id: String, _player: Player) -> void:
-	hint.text = "Đã bỏ đồ vào giỏ! Nhiệm vụ giỏ cần tay cầm có dấu !"
+func _on_stored_extra(id: String, _player: Player) -> void:
+	if id in ["banana", "popcorn", "boba", "box"]:
+		hint.text = "Đã vứt rác gọn gàng vào thùng! ✨"
+	elif id in ["hammer", "wallet", "pillow", "gamepad"]:
+		hint.text = "Đã cất đồ gọn gàng vào giỏ! ✨"
+	else:
+		hint.text = "Đã dọn dẹp vật phẩm! ✨"
 
 func _on_cleaned(id: String, _player: Player) -> void:
 	quest.complete_target("clean", id)
-	if quest.get_count("clean") >= 2:
+	var clean_goal: int = quest.get_goal("clean") if quest.has_method("get_goal") else 4
+	if quest.get_count("clean") >= clean_goal:
 		hint.text = "Sàn đã sạch bóng! Hãy mang cây lau về cất ở góc phòng nhé! 🧹✨"
+	check_room_completion()
 
 func _setup_world() -> void:
 	var world: Node2D = arena.get_node("YSortArena")
+	# Reusable Party Battle items remain on the floor as clutter to be categorized or tidied on completion.
+
 	# Reuse the existing gamepad instead of spawning an identical non-objective copy.
 	# In Co-op it is the unique basket objective and receives the same quest badge.
 	var original_gamepad := world.get_node("ItemGamepad") as ItemPickup
@@ -296,7 +361,8 @@ func _setup_world() -> void:
 	badge.add_theme_constant_override("outline_size", 4)
 	original_gamepad.add_child(badge)
 	# Unique types preserve objective identity when picked up, dropped or thrown.
-	for entry in [["coop_mop", Vector2(430, 720)], ["coop_remote", Vector2(860, 620)], ["coop_trash", Vector2(1200, 520)], ["coop_pillow_1", Vector2(820, 800)], ["coop_pillow_2", Vector2(1300, 800)]]:
+	# Mop is placed near the kitchen storage rack ready to be taken to clean stains.
+	for entry in [["coop_mop", Vector2(1400, 310)], ["coop_remote", Vector2(860, 620)], ["coop_trash", Vector2(1200, 520)], ["coop_pillow_1", Vector2(820, 800)], ["coop_pillow_2", Vector2(1300, 800)]]:
 		var item := ITEM_SCENE.instantiate() as ItemPickup
 		item.item_type = entry[0]
 		item.position = entry[1]
@@ -310,11 +376,19 @@ func _setup_world() -> void:
 		spot.cleaned.connect(_on_cleaned)
 		spots.append(spot)
 	_add_zone(world, "remote", ["coop_remote"], "store", Vector2(620, 345), "")
-	_add_zone(world, "trash", ["coop_trash"], "store", Vector2(1510, 415), "res://assets/coop/advanced/trash_bin_anim.png")
-	_add_zone(world, "basket", ["coop_gamepad", "gamepad", "pillow", "wallet", "box"], "store", Vector2(380, 455), "res://assets/coop/basket.png")
-	_add_zone(world, "pillow_1", ["coop_pillow_1", "coop_pillow_2"], "pillow", Vector2(565, 435), "")
-	_add_zone(world, "pillow_2", ["coop_pillow_1", "coop_pillow_2"], "pillow", Vector2(675, 435), "")
-	_add_zone(world, "mop_station", ["coop_mop"], "clean", Vector2(430, 720), "")
+	_add_zone(world, "trash", ["coop_trash", "box", "banana", "popcorn", "boba"], "store", Vector2(1510, 415), "res://assets/coop/advanced/trash_bin_anim.png")
+	_add_zone(world, "basket", ["coop_gamepad", "gamepad", "pillow", "wallet", "hammer"], "store", Vector2(380, 455), "res://assets/coop/basket.png")
+	var sofa := world.get_node_or_null("Sofa") as Node2D
+	var pillow_1_pos := Vector2(565, 435)
+	var pillow_2_pos := Vector2(675, 435)
+	if is_instance_valid(sofa):
+		var slot_l := sofa.get_node_or_null("PillowSlotLeft") as Marker2D
+		var slot_r := sofa.get_node_or_null("PillowSlotRight") as Marker2D
+		pillow_1_pos = slot_l.global_position if slot_l else sofa.to_global(Vector2(-55, -55))
+		pillow_2_pos = slot_r.global_position if slot_r else sofa.to_global(Vector2(55, -55))
+	_add_zone(world, "pillow_1", ["coop_pillow_1", "coop_pillow_2"], "pillow", pillow_1_pos, "")
+	_add_zone(world, "pillow_2", ["coop_pillow_1", "coop_pillow_2"], "pillow", pillow_2_pos, "")
+	_add_zone(world, "mop_station", ["coop_mop"], "clean", Vector2(1400, 270), "res://assets/coop/advanced/mop_rack.png")
 	
 	for player in [arena.p1, arena.p2]:
 		var guidance := CoopItemGuidance.new()

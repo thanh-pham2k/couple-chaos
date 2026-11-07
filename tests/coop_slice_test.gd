@@ -62,6 +62,8 @@ func _ready() -> void:
 	var n := 0
 	var pillow_ids := ["coop_pillow_2", "coop_pillow_1"]
 	for zone in game.zones:
+		if zone.target_id == "mop_station":
+			continue # Mop station is completed after cleaning all floor stains
 		var player: Player = p1 if n % 2 == 0 else p2
 		var objective_id: String = pillow_ids.pop_front() if zone.category == "pillow" else zone.accepts[0]
 		assert(zone.accepts.has(objective_id), "Either pillow must fit either sofa position")
@@ -73,6 +75,7 @@ func _ready() -> void:
 		await get_tree().process_frame
 		player.global_position = zone.global_position
 		player.trigger_grab()
+		game._physics_process(game.PLACE_DURATION + 0.05)
 		assert(zone.completed and player.held_item_type.is_empty())
 		if zone.category == "pillow":
 			var placed := zone.get_node_or_null("PlacedPillow") as Sprite2D
@@ -83,13 +86,13 @@ func _ready() -> void:
 	assert(game.quest.get_count("pillow") == 2)
 	assert(game.session.running, "Cleaning must still be required")
 
-	# Four varieties are present; any two complete the cleaning goal.
+	# Four varieties are present; all four must be cleaned to satisfy the clean goal.
 	assert(game.spots.size() == 4, "All four spill types must be present")
 	for spot in game.spots:
 		assert(spot.state == "dirty" and spot.progress == 0)
 	# Cleaning must require the mop, three strokes, and only count once.
-	for i in range(2):
-		var player: Player = p1 if i == 0 else p2
+	for i in range(4):
+		var player: Player = p1 if i % 2 == 0 else p2
 		var spot = game.spots[i]
 		player.global_position = spot.global_position
 		player.clear_held_item()
@@ -105,10 +108,23 @@ func _ready() -> void:
 			player.trigger_attack()
 		assert(spot.state == "clean" and spot.progress == 3)
 		assert(not spot.scrub(player), "Already clean spot must not count twice")
-		player.drop_held_item()
-		await get_tree().process_frame
-	assert(game.quest.get_count("clean") == 2)
-	assert(game.quest.finished and not game.session.running, "All goals must finish the round")
+		if i < 3:
+			player.drop_held_item()
+			await get_tree().process_frame
+	assert(game.quest.get_count("clean") == 4)
+	# Mop must still be returned to station before the round is considered clean.
+	assert(game.session.running, "Cleaning done but mop still in hand; round must not end yet")
+	var mop_zone: CoopDropZone = null
+	for z in game.zones:
+		if z.target_id == "mop_station":
+			mop_zone = z
+			break
+	assert(mop_zone != null and not mop_zone.completed)
+	p2.global_position = mop_zone.global_position
+	assert(game.try_interact(p2))
+	game._physics_process(game.PLACE_DURATION + 0.05)
+	assert(mop_zone.completed and p2.held_item_type.is_empty())
+	assert(game.quest.finished and not game.session.running, "All goals and clean room must finish the round")
 
 	# Restart restores quest, timer, interaction targets and movable items.
 	game.restart_round()

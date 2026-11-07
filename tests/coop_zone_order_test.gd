@@ -47,6 +47,7 @@ func _ready() -> void:
 			assert(player.global_position.distance_to(zone.global_position) <= 160.0, "Fixture should remain within interaction radius")
 			assert(zone.prompt.visible, "Action prompt must show at reachable in-range position: " + entry[0])
 			await _press(KEY_E if player == p1 else KEY_J)
+			for f in range(25): await get_tree().physics_frame
 			assert(zone.completed and player.held_item_type.is_empty(), "Correct item must deposit regardless of order: " + entry[0])
 			idx += 1
 		assert(game.quest.get_count("store") == 3 and game.quest.get_count("pillow") == 2, "All objectives should count once")
@@ -62,15 +63,16 @@ func _ready() -> void:
 	for candidate in game.zones:
 		if candidate.target_id == "basket": basket = candidate
 	player.pick_up("coop_gamepad")
-	player.global_position = basket.global_position + Vector2(0, 162)
+	player.global_position = basket.global_position + Vector2(-162, 0)
 	for i in range(4): await get_tree().physics_frame
 	assert(not basket.prompt.visible, "Prompt must not show outside the exact interaction radius")
 	assert(not game.try_interact(player), "Outside the radius cannot deposit")
 	assert(not basket.completed and player.held_item_type == "coop_gamepad")
-	player.global_position = basket.global_position + Vector2(0, 158)
+	player.global_position = basket.global_position + Vector2(-158, 0)
 	for i in range(4): await get_tree().physics_frame
 	assert(basket.prompt.visible, "Prompt must show inside the exact interaction radius")
 	await _press(KEY_E)
+	for f in range(25): await get_tree().physics_frame
 	assert(basket.completed and player.held_item_type.is_empty(), "In-range key must deposit")
 	print("Co-op destinations accept marked items in multiple orders through simulated physical keys; prompt matches distance.")
 	get_tree().quit()

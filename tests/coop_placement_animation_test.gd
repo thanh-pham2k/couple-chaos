@@ -54,6 +54,7 @@ func _ready() -> void:
 	assert(game.try_interact(p1))
 	p1.take_knockback_hit(0, true, Vector2.RIGHT)
 	game._physics_process(game.PLACE_DURATION)
+	await get_tree().process_frame
 	assert(not zone.completed and game.quest.get_count("store") == 0, "Stun before release must cancel the placement")
 	assert(not game.pending_placements.has(p1) and not is_instance_valid(zone.reserved_by), "Interrupted reservation must be released")
 	var remote_count := 0

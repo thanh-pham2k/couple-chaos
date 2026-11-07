@@ -23,7 +23,7 @@ static func update_marker(marker: Sprite2D, category: String, state: String, com
 		return
 	if category == "pillow":
 		marker.visible = not completed
-		marker.scale = Vector2(0.52, 0.52)
+		marker.scale = Vector2(0.44, 0.44)
 		marker.texture = load(ROOT + ("pillow_slot_active.png" if state == "active" else "pillow_slot_neutral.png"))
 	elif category == "item_target":
 		marker.visible = not completed

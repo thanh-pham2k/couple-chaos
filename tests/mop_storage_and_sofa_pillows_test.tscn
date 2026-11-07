@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://mop_storage_sofa_pillows_qa"]
+
+[ext_resource type="Script" path="res://tests/mop_storage_and_sofa_pillows_test.gd" id="1_test"]
+
+[node name="MopStorageAndSofaPillowsTest" type="Node"]
+script = ExtResource("1_test")

@@ -108,8 +108,12 @@ func _find_target(item_type: String) -> Node2D:
 		for z in zones:
 			if z is CoopDropZone and z.target_id == "mop_station" and not z.completed:
 				return z
+	elif item_type in ["coop_trash", "box", "banana", "popcorn", "boba"]:
+		for z in zones:
+			if z is CoopDropZone and z.target_id == "trash":
+				return z
 	elif item_type == "coop_gamepad" or not item_type.begins_with("coop_"):
-		# Clutter & gamepad -> basket
+		# Household clutter & gamepad -> basket
 		for z in zones:
 			if z is CoopDropZone and z.target_id == "basket":
 				return z

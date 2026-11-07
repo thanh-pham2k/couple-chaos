@@ -4,7 +4,7 @@ class_name CoopQuestManager
 signal changed
 signal all_completed
 
-const GOALS := {"store": 3, "clean": 2, "pillow": 2}
+const GOALS := {"store": 3, "clean": 4, "pillow": 2}
 var completed := {"store": {}, "clean": {}, "pillow": {}}
 var finished := false
 
@@ -16,6 +16,15 @@ func reset() -> void:
 func get_count(category: String) -> int:
 	return completed.get(category, {}).size()
 
+func get_goal(category: String) -> int:
+	return GOALS.get(category, 0)
+
+func is_all_goals_met() -> bool:
+	for cat in GOALS.keys():
+		if get_count(cat) < GOALS[cat]:
+			return false
+	return true
+
 func complete_target(category: String, id: String) -> bool:
 	if finished or not completed.has(category) or completed[category].has(id):
 		return false
@@ -23,7 +32,6 @@ func complete_target(category: String, id: String) -> bool:
 		return false
 	completed[category][id] = true
 	changed.emit()
-	if get_count("store") == 3 and get_count("clean") == 2 and get_count("pillow") == 2:
-		finished = true
+	if is_all_goals_met():
 		all_completed.emit()
 	return true
