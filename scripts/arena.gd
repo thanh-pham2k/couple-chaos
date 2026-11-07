@@ -16,6 +16,11 @@ func get_pickup_bounds() -> Rect2:
 	return Rect2(to_global(pickup_bounds.position), pickup_bounds.size)
 
 func _ready() -> void:
+	# Players do not block each other, but remain detectable by attacks and hazards.
+	if p1 and p2:
+		p1.add_collision_exception_with(p2)
+		p2.add_collision_exception_with(p1)
+
 	# Link touch controls to P1
 	if touch_controls:
 		touch_controls.target_player = p1

@@ -1,4 +1,4 @@
-[gd_scene load_steps=36 format=3]
+[gd_scene load_steps=37 format=3]
 
 [ext_resource type="Script" path="res://scripts/arena.gd" id="1_arena"]
 [ext_resource type="Texture2D" path="res://assets/environment/room_arena.png" id="2_bg"]
@@ -23,9 +23,10 @@
 [ext_resource type="PackedScene" path="res://scenes/workstation_front.tscn" id="20_work"]
 [ext_resource type="PackedScene" path="res://scenes/tv_front.tscn" id="21_tv"]
 [ext_resource type="PackedScene" path="res://scenes/counter_front.tscn" id="22_counter"]
-[ext_resource type="PackedScene" path="res://scenes/bed_modular.tscn" id="23_bed"]
+[ext_resource type="PackedScene" path="res://scenes/bed_front.tscn" id="23_bed"]
 [ext_resource type="PackedScene" path="res://scenes/door_modular.tscn" id="24_door"]
 [ext_resource type="PackedScene" path="res://scenes/aircon_front.tscn" id="25_aircon"]
+[ext_resource type="PackedScene" path="res://scenes/fridge_front.tscn" id="26_fridge"]
 
 [sub_resource type="AtlasTexture" id="WallPatch"]
 atlas = ExtResource("2_bg")
@@ -173,18 +174,8 @@ position = Vector2(240, 840)
 [node name="Counter" parent="YSortArena" instance=ExtResource("22_counter")]
 position = Vector2(1540, 260)
 
-[node name="Fridge" type="StaticBody2D" parent="YSortArena"]
-position = Vector2(1800, 285)
-collision_layer = 1
-collision_mask = 2
-
-[node name="Sprite2D" type="Sprite2D" parent="YSortArena/Fridge"]
-position = Vector2(0, -100)
-texture = ExtResource("15_fridge")
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="YSortArena/Fridge"]
-position = Vector2(0, -22)
-shape = SubResource("Shape_Fridge")
+[node name="Fridge" parent="YSortArena" instance=ExtResource("26_fridge")]
+position = Vector2(1800, 260)
 
 [node name="DiningSet" type="StaticBody2D" parent="YSortArena"]
 position = Vector2(1640, 560)
