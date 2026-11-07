@@ -18,12 +18,13 @@ static func sync_place_icon(icon: Sprite2D, prompt: Label, valid: bool) -> void:
 	if is_instance_valid(icon) and is_instance_valid(prompt):
 		icon.visible = prompt.visible and valid
 
-static func update_marker(marker: Sprite2D, category: String, state: String, completed: bool) -> void:
+static func update_marker(marker: Sprite2D, category: String, state: String, completed: bool, item_held: bool = true) -> void:
 	if not is_instance_valid(marker):
 		return
 	if category == "pillow":
-		marker.visible = not completed
-		marker.scale = Vector2(0.44, 0.44)
+		marker.visible = not completed and item_held
+		marker.scale = Vector2(0.48, 0.30)
+		marker.position = Vector2(0, -4.0)
 		marker.texture = load(ROOT + ("pillow_slot_active.png" if state == "active" else "pillow_slot_neutral.png"))
 	elif category == "item_target":
 		marker.visible = not completed

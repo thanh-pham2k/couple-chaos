@@ -33,6 +33,7 @@
 [ext_resource type="Texture2D" path="res://assets/furniture/dining_table.png" id="30_dining_table"]
 [ext_resource type="Texture2D" path="res://assets/furniture/dining_chair_left.png" id="31_chair_left"]
 [ext_resource type="Texture2D" path="res://assets/furniture/dining_chair_right.png" id="32_chair_right"]
+[ext_resource type="PackedScene" path="res://scenes/sofa_modular.tscn" id="33_sofa_modular"]
 
 [sub_resource type="AtlasTexture" id="WallPatch"]
 atlas = ExtResource("2_bg")
@@ -170,28 +171,8 @@ texture = ExtResource("29_table_front")
 position = Vector2(0, -18)
 shape = SubResource("Shape_CoffeeTableFront")
 
-[node name="SofaBack" type="Sprite2D" parent="YSortArena"]
-position = Vector2(620, 450)
-texture = ExtResource("27_sofa_back")
-
-[node name="Sofa" type="StaticBody2D" parent="YSortArena"]
+[node name="Sofa" parent="YSortArena" instance=ExtResource("33_sofa_modular")]
 position = Vector2(620, 530)
-collision_layer = 1
-collision_mask = 2
-
-[node name="Sprite2D" type="Sprite2D" parent="YSortArena/Sofa"]
-position = Vector2(0, -80)
-texture = ExtResource("28_sofa_front")
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="YSortArena/Sofa"]
-position = Vector2(0, -22)
-shape = SubResource("Shape_Sofa")
-
-[node name="PillowSlotLeft" type="Marker2D" parent="YSortArena/Sofa"]
-position = Vector2(-58, -64)
-
-[node name="PillowSlotRight" type="Marker2D" parent="YSortArena/Sofa"]
-position = Vector2(58, -64)
 
 [node name="Bed" parent="YSortArena" instance=ExtResource("23_bed")]
 position = Vector2(240, 840)

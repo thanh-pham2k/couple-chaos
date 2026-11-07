@@ -97,22 +97,25 @@ func refresh() -> void:
 	var wrong_item_nearby := false
 	var correct_item := ""
 	var incorrect_item := ""
+	var item_held := false
 	
 	if not completed and is_inside_tree():
 		var session := get_tree().get_first_node_in_group("coop_session")
 		if session and "arena" in session and session.arena:
 			for p in [session.arena.p1, session.arena.p2]:
 				if is_instance_valid(p) and can_accept(p.held_item_type):
-					state = "active"
+					item_held = true
 					break
 
 	var can_retrieve_mop := false
+	var active_slot := false
 	for player in nearby:
 		if not is_instance_valid(player) or player.global_position.distance_to(global_position) > INTERACTION_RADIUS:
 			continue
 		if can_accept(player.held_item_type):
+			item_held = true
 			if not completed:
-				state = "active"
+				active_slot = true
 			keys.append("E / 🖐" if player.player_id == "p1" else "J")
 			correct_item = player.held_item_type
 		elif not player.held_item_type.is_empty() and not completed:
@@ -121,9 +124,11 @@ func refresh() -> void:
 		elif target_id == "mop_station" and completed and player.held_item_type.is_empty():
 			keys.append("E / 🖐" if player.player_id == "p1" else "J")
 			can_retrieve_mop = true
-			state = "active"
+			active_slot = true
 			
-	CoopVisualFeedback.update_marker(marker, category, state, completed)
+	if not completed and active_slot:
+		state = "active"
+	CoopVisualFeedback.update_marker(marker, category, state, completed, item_held)
 	if target_id == "basket" and is_instance_valid(prop):
 		CoopVisualFeedback.update_basket(prop, state)
 		
@@ -234,10 +239,32 @@ func accept(player: Player) -> bool:
 		pillow.name = "PlacedPillow"
 		var pillow_texture_path := "res://assets/coop/advanced/sofa_pillow_1.png" if target_id == "pillow_1" else "res://assets/coop/advanced/sofa_pillow_2.png"
 		pillow.texture = load(pillow_texture_path)
-		pillow.scale = Vector2(0.68, 0.68)
+		pillow.scale = Vector2(0.9, 0.9)
 		pillow.position = Vector2(0, 0)
 		pillow.z_index = 0
 		add_child(pillow)
+		
+		# Modular rendering: mirror visual into Sofa/PlacedPillows between Base and Foreground
+		var sofa: Node2D = null
+		var parent_node := get_parent()
+		if is_instance_valid(parent_node):
+			sofa = parent_node.get_node_or_null("Sofa") as Node2D
+		if not is_instance_valid(sofa) and is_inside_tree():
+			var session := get_tree().get_first_node_in_group("coop_session")
+			if session and "arena" in session and session.arena:
+				sofa = session.arena.get_node_or_null("YSortArena/Sofa") as Node2D
+		if is_instance_valid(sofa):
+			var placed_container := sofa.get_node_or_null("PlacedPillows") as Node2D
+			if is_instance_valid(placed_container):
+				var modular_pillow := Sprite2D.new()
+				modular_pillow.name = "Modular_" + target_id
+				modular_pillow.texture = pillow.texture
+				modular_pillow.scale = pillow.scale
+				modular_pillow.position = sofa.to_local(global_position)
+				placed_container.add_child(modular_pillow)
+				# Retain pillow.visible = true for test and marker compatibility
+				pillow.visible = true
+				
 		CoopVisualFeedback.play_success_fx(get_parent(), global_position, "place_success_fx")
 	elif target_id == "remote":
 		var remote := Sprite2D.new()

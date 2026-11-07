@@ -27,11 +27,14 @@ func _ready() -> void:
 	var expected_right: Vector2 = sofa.get_node("PillowSlotRight").global_position if sofa.has_node("PillowSlotRight") else sofa.to_global(Vector2(58, -64))
 	assert(pillow_1_zone.position == expected_left, "Pillow 1 must align with sofa anchor PillowSlotLeft on cushion")
 	assert(pillow_2_zone.position == expected_right, "Pillow 2 must align with sofa anchor PillowSlotRight on cushion")
-	assert(pillow_1_zone.marker.visible and pillow_2_zone.marker.visible, "Markers must be visible before placement")
+	assert(not pillow_1_zone.marker.visible, "Marker must be hidden before player picks up pillow")
 	
 	# Place Pillow 1
 	p1.global_position = pillow_1_zone.global_position + Vector2(0, 30)
 	p1.pick_up("coop_pillow_1")
+	pillow_1_zone.refresh()
+	pillow_2_zone.refresh()
+	assert(pillow_1_zone.marker.visible and pillow_2_zone.marker.visible, "Markers must be visible when player carries pillow")
 	assert(p1.held_item_type == "coop_pillow_1")
 	assert(game.try_interact(p1), "Must interact with pillow zone")
 	# Simulate placement release and completion

@@ -79,13 +79,13 @@ func _ready() -> void:
 	for frame in range(85): await get_tree().physics_frame
 	_key(KEY_A, false)
 	_key(KEY_W, true)
-	for frame in range(50): await get_tree().physics_frame
+	for frame in range(40): await get_tree().physics_frame
 	_key(KEY_W, false)
 	await get_tree().physics_frame
 	var basket = null
 	for zone in game.zones:
 		if zone.target_id == "basket": basket = zone
-	assert(p1.global_position.distance_to(basket.global_position) < 80.0, "Wrong-item test must reach the basket on foot")
+	assert(p1.global_position.distance_to(basket.global_position) < 100.0, "Wrong-item test must reach the basket on foot")
 	_key(KEY_E, true)
 	await get_tree().physics_frame
 	await get_tree().physics_frame

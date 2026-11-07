@@ -177,13 +177,12 @@ func test_sofa_pillow_placement_and_sync() -> void:
 	var p1: Player = slice.arena.p1
 	var p2: Player = slice.arena.p2
 	var sofa := slice.arena.get_node("YSortArena/Sofa") as Node2D
-	var sofa_back := slice.arena.get_node("YSortArena/SofaBack") as Sprite2D
 	var slot_l := sofa.get_node("PillowSlotLeft") as Marker2D
 	var slot_r := sofa.get_node("PillowSlotRight") as Marker2D
 	
 	assert(slot_l != null and slot_r != null, "Both pillow slots must exist")
-	assert(slot_l.position == Vector2(-58, -64), "Slot left anchored at (-58, -64)")
-	assert(slot_r.position == Vector2(58, -64), "Slot right anchored at (58, -64)")
+	assert(slot_l.position == Vector2(-58, -84), "Slot left anchored on seat cushion at (-58, -84)")
+	assert(slot_r.position == Vector2(58, -84), "Slot right anchored on seat cushion at (58, -84)")
 	
 	var p1_zone: CoopDropZone = null
 	var p2_zone: CoopDropZone = null
@@ -194,11 +193,13 @@ func test_sofa_pillow_placement_and_sync() -> void:
 	assert(p1_zone != null and p2_zone != null, "Both pillow drop zones must exist")
 	assert(p1_zone.position == sofa.to_global(slot_l.position), "Pillow 1 zone must match slot L")
 	assert(p2_zone.position == sofa.to_global(slot_r.position), "Pillow 2 zone must match slot R")
-	assert(p1_zone.marker.visible, "Pillow 1 marker must be visible initially")
+	assert(not p1_zone.marker.visible, "Pillow 1 marker must be hidden before picking up pillow")
 	assert(not p1_zone.label.visible, "Static text labels on furniture must remain hidden")
 	
 	# Test P1 placing pillow 1
 	p1.pick_up("coop_pillow_1")
+	p1_zone.refresh()
+	assert(p1_zone.marker.visible, "Pillow 1 marker must appear once player carries a pillow")
 	p1.global_position = p1_zone.global_position
 	assert(slice.try_interact(p1), "P1 must interact with pillow 1 slot")
 	assert(p1.is_placing, "P1 must enter placing animation")
@@ -215,7 +216,7 @@ func test_sofa_pillow_placement_and_sync() -> void:
 	var placed_p1 := p1_zone.get_node_or_null("PlacedPillow") as Sprite2D
 	assert(placed_p1 != null, "PlacedPillow sprite must exist")
 	assert(placed_p1.z_index == 0, "Placed pillow z_index must be 0 for natural Y-sort under sofa front")
-	assert(placed_p1.scale == Vector2(0.68, 0.68), "Placed pillow scale must be natural (0.68)")
+	assert(placed_p1.scale == Vector2(0.9, 0.9), "Placed pillow scale must be natural (0.90)")
 	
 	# Test P2 placing pillow 2 independently
 	p2.pick_up("coop_pillow_2")
@@ -259,7 +260,10 @@ func test_replay_restores_state() -> void:
 		
 	assert(new_p1_zone != null, "New pillow 1 zone exists after restart")
 	assert(not new_p1_zone.completed, "New pillow 1 zone must not be completed")
-	assert(new_p1_zone.marker.visible, "Pillow 1 marker visible again")
+	assert(not new_p1_zone.marker.visible, "Pillow 1 marker hidden initially when empty handed")
+	slice.arena.p1.pick_up("coop_pillow_1")
+	new_p1_zone.refresh()
+	assert(new_p1_zone.marker.visible, "Pillow 1 marker visible when carrying pillow")
 	assert(slice.quest.get_count("pillow") == 0, "Pillow quest count reset to 0")
 	
 	slice.queue_free()
