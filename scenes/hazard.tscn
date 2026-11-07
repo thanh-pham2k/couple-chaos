@@ -7,6 +7,7 @@
 radius = 42.0
 
 [node name="Hazard" type="Area2D" groups=["hazards"]]
+z_index = -1
 collision_layer = 4
 collision_mask = 2
 script = ExtResource("1_hazard")

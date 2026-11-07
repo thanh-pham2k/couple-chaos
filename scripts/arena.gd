@@ -9,6 +9,12 @@ var match_time_left: float = 138.0 # 02:18 countdown as in reference screenshot
 var chaos_score: int = 3 # ⭐ 3/5 initial
 const MAX_CHAOS_STARS: int = 5
 
+# Keep landed pickups inside the walkable side of the four arena walls.
+@export var pickup_bounds: Rect2 = Rect2(110, 280, 1700, 720)
+
+func get_pickup_bounds() -> Rect2:
+	return Rect2(to_global(pickup_bounds.position), pickup_bounds.size)
+
 func _ready() -> void:
 	# Link touch controls to P1
 	if touch_controls:

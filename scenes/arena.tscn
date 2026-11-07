@@ -40,7 +40,7 @@ size = Vector2(160, 45)
 size = Vector2(60, 30)
 
 [sub_resource type="RectangleShape2D" id="Shape_Bed"]
-size = Vector2(210, 75)
+size = Vector2(210, 130)
 
 [sub_resource type="RectangleShape2D" id="Shape_Fridge"]
 size = Vector2(100, 45)
@@ -85,7 +85,7 @@ position = Vector2(780, 480)
 texture = ExtResource("14_rug")
 
 [node name="Workstation" type="StaticBody2D" parent="YSortArena"]
-position = Vector2(250, 230)
+position = Vector2(250, 285)
 collision_layer = 1
 collision_mask = 2
 
@@ -98,7 +98,7 @@ position = Vector2(0, -20)
 shape = SubResource("Shape_Desk")
 
 [node name="OfficeChair" type="StaticBody2D" parent="YSortArena"]
-position = Vector2(250, 290)
+position = Vector2(250, 350)
 collision_layer = 1
 collision_mask = 2
 
@@ -111,7 +111,7 @@ position = Vector2(0, -15)
 shape = SubResource("Shape_Chair")
 
 [node name="TVConsole" type="StaticBody2D" parent="YSortArena"]
-position = Vector2(620, 230)
+position = Vector2(620, 285)
 collision_layer = 1
 collision_mask = 2
 
@@ -137,7 +137,7 @@ position = Vector2(0, -20)
 shape = SubResource("Shape_Table")
 
 [node name="CoffeeTable" type="StaticBody2D" parent="YSortArena"]
-position = Vector2(720, 460)
+position = Vector2(650, 485)
 collision_layer = 1
 collision_mask = 2
 
@@ -172,11 +172,11 @@ position = Vector2(0, -120)
 texture = ExtResource("16_bed")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="YSortArena/Bed"]
-position = Vector2(0, -35)
+position = Vector2(0, -65)
 shape = SubResource("Shape_Bed")
 
 [node name="Counter" type="StaticBody2D" parent="YSortArena"]
-position = Vector2(1540, 230)
+position = Vector2(1540, 285)
 collision_layer = 1
 collision_mask = 2
 
@@ -189,7 +189,7 @@ position = Vector2(0, -22)
 shape = SubResource("Shape_Counter")
 
 [node name="Fridge" type="StaticBody2D" parent="YSortArena"]
-position = Vector2(1800, 230)
+position = Vector2(1800, 285)
 collision_layer = 1
 collision_mask = 2
 
@@ -232,11 +232,11 @@ position = Vector2(950, 640)
 item_type = "hammer"
 
 [node name="ItemPillow" parent="YSortArena" instance=ExtResource("5_item")]
-position = Vector2(880, 450)
+position = Vector2(1060, 540)
 item_type = "pillow"
 
 [node name="ItemBoba" parent="YSortArena" instance=ExtResource("5_item")]
-position = Vector2(720, 420)
+position = Vector2(475, 500)
 item_type = "boba"
 
 [node name="ItemBanana" parent="YSortArena" instance=ExtResource("5_item")]
@@ -244,15 +244,15 @@ position = Vector2(1640, 500)
 item_type = "banana"
 
 [node name="ItemPopcorn" parent="YSortArena" instance=ExtResource("5_item")]
-position = Vector2(620, 270)
+position = Vector2(650, 350)
 item_type = "popcorn"
 
 [node name="ItemGamepad" parent="YSortArena" instance=ExtResource("5_item")]
-position = Vector2(580, 240)
+position = Vector2(540, 330)
 item_type = "gamepad"
 
 [node name="ItemWallet" parent="YSortArena" instance=ExtResource("5_item")]
-position = Vector2(280, 240)
+position = Vector2(360, 345)
 item_type = "wallet"
 
 [node name="ItemBox" parent="YSortArena" instance=ExtResource("5_item")]

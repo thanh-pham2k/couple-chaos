@@ -31,6 +31,10 @@ var attack_timer: float = 0.0
 var hammer_hit_pending: bool = false
 const HAMMER_ATTACK_DURATION := 0.36
 const HAMMER_IMPACT_TIME := HAMMER_ATTACK_DURATION * 4.0 / 6.0
+# Normalize drawn character height while preserving the foot anchor.
+const HAMMER_HOLD_SCALE := 160.0 / 140.0
+const HAMMER_SIDE_HOLD_SCALE := 160.0 / 125.0
+const HAMMER_ATTACK_SCALE := 160.0 / 116.0
 
 var is_throwing: bool = false
 var throw_timer: float = 0.0
@@ -136,7 +140,13 @@ func update_character_animation(action: String, delta: float) -> bool:
 	if weapon_sprite:
 		weapon_sprite.visible = held_item_type == "hammer" and not action.begins_with("hammer_")
 	character_animation_time += delta
-	sprite.position.y = -70.0
+	var visual_scale := 1.0
+	if action == "hammer_attack":
+		visual_scale = HAMMER_ATTACK_SCALE
+	elif action.begins_with("hammer_"):
+		visual_scale = HAMMER_HOLD_SCALE if facing == "down" else HAMMER_SIDE_HOLD_SCALE
+	sprite.scale = Vector2.ONE * visual_scale
+	sprite.position.y = (-60.0 if action == "hammer_attack" else -70.0) * visual_scale
 	if action == "throw":
 		sprite.frame = mini(int(character_animation_time / THROW_DURATION * 6.0), 5)
 	elif action == "hammer_attack":
@@ -451,21 +461,6 @@ func read_input() -> void:
 	var attack_pressed = Input.is_action_just_pressed(prefix + "attack")
 	var grab_pressed = Input.is_action_just_pressed(prefix + "grab")
 
-	# Resilient keyboard fallback keys
-	if player_id == "p1":
-		if Input.is_key_pressed(KEY_J) or Input.is_key_pressed(KEY_F):
-			if not is_attacking: attack_pressed = true
-		if Input.is_key_pressed(KEY_K) or Input.is_key_pressed(KEY_E):
-			if not is_throwing: grab_pressed = true
-		if Input.is_key_pressed(KEY_SHIFT) or Input.is_key_pressed(KEY_SPACE) or Input.is_key_pressed(KEY_L):
-			if not is_dashing: dash_pressed = true
-	else:
-		if Input.is_key_pressed(KEY_KP_1) or Input.is_key_pressed(KEY_1):
-			if not is_attacking: attack_pressed = true
-		if Input.is_key_pressed(KEY_KP_2) or Input.is_key_pressed(KEY_2):
-			if not is_throwing: grab_pressed = true
-		if Input.is_key_pressed(KEY_KP_0) or Input.is_key_pressed(KEY_ENTER) or Input.is_key_pressed(KEY_0):
-			if not is_dashing: dash_pressed = true
 
 	if dash_pressed:
 		trigger_dash()
@@ -577,6 +572,7 @@ func update_sprite_pose(pose_name: String) -> void:
 			sprite.hframes = 1
 			sprite.frame = 0
 			sprite.position.y = -80.0
+			sprite.scale = Vector2.ONE
 			update_weapon_transform()
 		sprite.texture = textures[pose_name]
 		if weapon_sprite:
