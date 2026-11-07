@@ -22,6 +22,7 @@ func _on_body_entered(body: Node2D) -> void:
 			if slip_dir == Vector2.ZERO:
 				slip_dir = Vector2.DOWN
 			body.trigger_slip(slip_dir)
+			set_deferred("monitoring", false)
 			queue_free() # Banana peel gets consumed
 		elif hazard_type == "boba_puddle":
 			body.trigger_slow()

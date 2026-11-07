@@ -21,12 +21,27 @@ func _ready() -> void:
 	update_texture()
 	body_entered.connect(_on_body_entered)
 	_update_floor_visual()
+	if item_type.begins_with("coop_"):
+		var badge := Label.new()
+		badge.name = "QuestBadge"
+		badge.text = "!"
+		badge.position = Vector2(-5, -50)
+		badge.add_theme_font_size_override("font_size", 28)
+		badge.add_theme_color_override("font_color", Color(1.0, 0.85, 0.25))
+		badge.add_theme_color_override("font_outline_color", Color(0.3, 0.18, 0.1))
+		badge.add_theme_constant_override("outline_size", 4)
+		add_child(badge)
 
 func get_item_type() -> String:
 	return item_type
 
 func update_texture() -> void:
 	var path = "res://assets/items/" + item_type + ".png"
+	var session := get_tree().get_first_node_in_group("coop_session")
+	if session and session.has_method("resolve_item_texture"):
+		var resolved_path: String = session.resolve_item_texture(item_type)
+		if not resolved_path.is_empty():
+			path = resolved_path
 	if ResourceLoader.exists(path) and sprite:
 		sprite.texture = load(path)
 
@@ -92,7 +107,7 @@ func _on_body_entered(body: Node2D) -> void:
 func _update_floor_visual() -> void:
 	z_index = 0 if is_flying else -1
 	if sprite:
-		sprite.scale = Vector2.ONE if is_flying else FLOOR_ITEM_SCALE
+		sprite.scale = (Vector2(1.2, 1.2) if item_type == "coop_mop" else (Vector2.ONE if is_flying else FLOOR_ITEM_SCALE))
 		sprite.position = Vector2.ZERO
 
 func land_on_floor() -> void:
@@ -120,7 +135,7 @@ func spawn_hazard(hazard_type: String, pos: Vector2) -> void:
 		var h = hazard_scene.instantiate()
 		h.hazard_type = hazard_type
 		h.global_position = pos
-		get_parent().add_child(h)
+		get_parent().call_deferred("add_child", h)
 
 func spawn_vfx(vfx_name: String, pos: Vector2) -> void:
 	var vfx_scene = load("res://scenes/vfx.tscn")
@@ -128,4 +143,4 @@ func spawn_vfx(vfx_name: String, pos: Vector2) -> void:
 		var v = vfx_scene.instantiate()
 		v.vfx_name = vfx_name
 		v.global_position = pos
-		get_parent().add_child(v)
+		get_parent().call_deferred("add_child", v)

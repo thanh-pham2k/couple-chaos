@@ -124,14 +124,17 @@ func update_character_animation(action: String, delta: float) -> bool:
 	var dir := facing_direction
 	var facing := "right" if absf(dir.x) > absf(dir.y) else ("up" if dir.y < 0.0 else "down")
 	var key := action + "_" + facing
-	if not character_animations.has(key):
+	# Reuse the first frame of the six-frame throw atlas as a two-handed
+	# stationary hold: the legacy carry.png already contains an object.
+	var texture_key := ("throw_" + facing) if action == "carry_idle" else key
+	if not character_animations.has(texture_key):
 		return false
 	if character_animation_key != key:
 		character_animation_key = key
 		character_animation_time = 0.0
 		sprite.hframes = 1
 		sprite.frame = 0
-		sprite.texture = character_animations[key]
+		sprite.texture = character_animations[texture_key]
 		sprite.hframes = 4 if action == "hammer_idle" else 6
 		sprite.position = Vector2(0, -70)
 		sprite.scale = Vector2.ONE
@@ -147,7 +150,9 @@ func update_character_animation(action: String, delta: float) -> bool:
 		visual_scale = HAMMER_HOLD_SCALE if facing == "down" else HAMMER_SIDE_HOLD_SCALE
 	sprite.scale = Vector2.ONE * visual_scale
 	sprite.position.y = (-60.0 if action == "hammer_attack" else -70.0) * visual_scale
-	if action == "throw":
+	if action == "carry_idle":
+		sprite.frame = 0
+	elif action == "throw":
 		sprite.frame = mini(int(character_animation_time / THROW_DURATION * 6.0), 5)
 	elif action == "hammer_attack":
 		sprite.frame = mini(int(character_animation_time / HAMMER_ATTACK_DURATION * 6.0), 5)
@@ -186,6 +191,31 @@ func update_weapon_transform() -> void:
 			if is_facing_left:
 				hand_position.x = -hand_position.x
 			carry_pivot.position = hand_position
+		if not held_item_type.is_empty() and held_item_type != "hammer":
+			# Each atlas was authored around the same 64px prop cell, but its
+			# artwork occupies a different fraction of that cell. Keep the grip
+			# below the face and follow the current facing/pose.
+			var pose_direction := "right" if absf(facing_direction.x) > absf(facing_direction.y) else ("up" if facing_direction.y < 0.0 else "down")
+			if character_animation_key == "":
+				carry_pivot.position = Vector2(0, -52) if pose_direction != "right" else Vector2(-25 if is_facing_left else 25, -52)
+				carry_pivot.z_index = -1 if pose_direction == "up" else 0
+			if character_animation_key.begins_with("carry_run_"):
+				var bob := [0.0, -1.0, -2.0, 0.0, -1.0, -2.0]
+				carry_pivot.position.y += bob[sprite.frame]
+			var item_scale := 0.52
+			match held_item_type:
+				"coop_remote": item_scale = 0.45
+				"coop_gamepad", "gamepad": item_scale = 0.55
+				"coop_trash", "box": item_scale = 0.58
+				"coop_pillow_1", "coop_pillow_2", "pillow": item_scale = 0.62
+				"coop_mop": item_scale = 1.0
+			held_item_sprite.scale = Vector2.ONE * item_scale
+			held_item_sprite.position = Vector2(0, -3) if held_item_type != "coop_mop" else Vector2(6, 2)
+			held_item_sprite.rotation_degrees = -12.0 if held_item_type == "coop_mop" else 0.0
+		else:
+			if held_item_sprite:
+				held_item_sprite.position = Vector2.ZERO
+				held_item_sprite.rotation = 0.0
 
 func _physics_process(delta: float) -> void:
 	# 1. Regenerate stamina
@@ -335,7 +365,8 @@ func _physics_process(delta: float) -> void:
 			if not update_character_animation("hammer_idle", delta):
 				update_sprite_pose("idle")
 		elif held_item_type != "":
-			update_sprite_pose("carry")
+			if not update_character_animation("carry_idle", delta):
+				update_sprite_pose("carry")
 		else:
 			update_sprite_pose("idle")
 
@@ -488,6 +519,9 @@ func trigger_dash() -> void:
 func trigger_attack() -> void:
 	if is_stunned or is_slipping or is_attacking or is_dashing or knockback_state != KnockbackState.NONE:
 		return
+	var session := get_tree().get_first_node_in_group("coop_session")
+	if session and session.has_method("try_use") and session.try_use(self):
+		return
 
 	is_attacking = true
 	attack_timer = 0.36
@@ -558,6 +592,9 @@ func animate_pillow_swing() -> void:
 func trigger_grab() -> void:
 	if is_stunned or is_slipping or is_attacking or is_throwing or knockback_state != KnockbackState.NONE:
 		return
+	var session := get_tree().get_first_node_in_group("coop_session")
+	if session and session.has_method("try_interact") and session.try_interact(self):
+		return
 
 	if held_item_type != "":
 		throw_held_item()
@@ -606,11 +643,17 @@ func pick_up(item_name: String) -> void:
 			weapon_sprite.visible = false
 		if held_item_sprite:
 			var item_tex_path = "res://assets/items/" + item_name + ".png"
+			var session := get_tree().get_first_node_in_group("coop_session")
+			if session and session.has_method("resolve_item_texture"):
+				var resolved_path: String = session.resolve_item_texture(item_name)
+				if not resolved_path.is_empty():
+					item_tex_path = resolved_path
 			if ResourceLoader.exists(item_tex_path):
 				held_item_sprite.texture = load(item_tex_path)
-				held_item_sprite.scale = Vector2(0.65, 0.65)
+				held_item_sprite.scale = Vector2(1.1, 1.1) if item_name == "coop_mop" else Vector2(0.65, 0.65)
 				held_item_sprite.visible = true
-		update_sprite_pose("carry")
+		if not update_character_animation("carry_idle", 0.0):
+			update_sprite_pose("carry")
 
 	chaos_event.emit(player_id.to_upper() + " nhặt được " + item_name.to_upper() + "!")
 
@@ -642,7 +685,7 @@ func drop_as_hazard(hazard_name: String) -> void:
 		var h = hazard_scene.instantiate()
 		h.hazard_type = hazard_name
 		h.global_position = global_position + facing_direction * 45.0
-		get_parent().add_child(h)
+		get_parent().call_deferred("add_child", h)
 		chaos_event.emit(player_id.to_upper() + " đặt bẫy " + hazard_name.to_upper() + " trên sàn!")
 	clear_held_item()
 
@@ -689,6 +732,9 @@ func take_knockback_hit(damage: int, stun: bool, hit_dir: Vector2, force: float 
 	if invulnerable_timer > 0.0:
 		return
 
+	var coop := get_tree().get_first_node_in_group("coop_session")
+	if coop:
+		damage = 0 # Co-op keeps playful knockback without an elimination race.
 	if damage > 0:
 		hearts = max(0, hearts - damage)
 		hearts_changed.emit(player_id, hearts)
@@ -760,7 +806,7 @@ func find_and_pickup_item() -> void:
 	var closest_item: Node2D = null
 	var closest_dist: float = 120.0
 	for it in items:
-		if it is Area2D and it.has_method("get_item_type"):
+		if is_instance_valid(it) and not it.is_queued_for_deletion() and it is Area2D and it.has_method("get_item_type"):
 			var d = global_position.distance_to(it.global_position)
 			if d < closest_dist:
 				closest_dist = d
@@ -777,7 +823,7 @@ func spawn_item_in_world(type: String, pos: Vector2) -> void:
 		var it = item_scene.instantiate()
 		it.item_type = type
 		it.global_position = pos
-		get_parent().add_child(it)
+		get_parent().call_deferred("add_child", it)
 
 func spawn_flying_item(type: String, pos: Vector2, dir: Vector2) -> void:
 	var item_scene = load("res://scenes/item.tscn")
@@ -788,7 +834,7 @@ func spawn_flying_item(type: String, pos: Vector2, dir: Vector2) -> void:
 		it.is_flying = true
 		it.fly_direction = dir
 		it.thrown_by = player_id
-		get_parent().add_child(it)
+		get_parent().call_deferred("add_child", it)
 
 func spawn_vfx_in_world(vfx_type: String, pos: Vector2) -> void:
 	var vfx_scene = load("res://scenes/vfx.tscn")
@@ -796,7 +842,7 @@ func spawn_vfx_in_world(vfx_type: String, pos: Vector2) -> void:
 		var v = vfx_scene.instantiate()
 		v.vfx_name = vfx_type
 		v.global_position = pos
-		get_parent().add_child(v)
+		get_parent().call_deferred("add_child", v)
 
 func get_opponent() -> Player:
 	var opp_id = "p2" if player_id == "p1" else "p1"
