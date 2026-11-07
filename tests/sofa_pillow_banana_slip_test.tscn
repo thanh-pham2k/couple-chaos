@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://c7v9s2k41p8q1"]
+
+[ext_resource type="Script" path="res://tests/sofa_pillow_banana_slip_test.gd" id="1_test"]
+
+[node name="SofaPillowBananaSlipTest" type="Node2D"]
+script = ExtResource("1_test")

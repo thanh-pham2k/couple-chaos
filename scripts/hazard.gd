@@ -11,6 +11,7 @@ var progress: int = 0
 var state: String = "dirty"
 var target_id: String = ""
 var feedback: Label
+var slip_cooldowns: Dictionary = {} # player_id -> remaining cooldown in seconds
 
 @onready var sprite: Sprite2D = $Sprite2D
 
@@ -21,6 +22,19 @@ func _ready() -> void:
 	update_texture()
 	body_entered.connect(_on_body_entered)
 	_setup_feedback_label()
+
+func _physics_process(delta: float) -> void:
+	if state == "clean" or is_queued_for_deletion():
+		return
+	for p_id in slip_cooldowns.keys():
+		slip_cooldowns[p_id] -= delta
+		if slip_cooldowns[p_id] <= 0.0:
+			slip_cooldowns.erase(p_id)
+	
+	if hazard_type == "banana_peel" and monitoring:
+		for body in get_overlapping_bodies():
+			if body is Player:
+				_check_slip_for_player(body)
 
 func _setup_feedback_label() -> void:
 	feedback = Label.new()
@@ -63,6 +77,7 @@ func scrub(player: Player) -> bool:
 func reset() -> void:
 	progress = 0
 	state = "dirty"
+	slip_cooldowns.clear()
 	if sprite:
 		sprite.visible = true
 		sprite.modulate.a = 1.0
@@ -88,11 +103,15 @@ func _on_body_entered(body: Node2D) -> void:
 		return
 	if body is Player:
 		if hazard_type == "banana_peel":
-			var slip_dir = body.velocity.normalized()
-			if slip_dir == Vector2.ZERO:
-				slip_dir = Vector2.DOWN
-			body.trigger_slip(slip_dir)
-			set_deferred("monitoring", false)
-			queue_free() # Banana peel gets consumed
+			_check_slip_for_player(body)
 		elif hazard_type == "boba_puddle":
 			body.trigger_slow()
+
+func _check_slip_for_player(body: Player) -> void:
+	if slip_cooldowns.has(body.player_id) or body.is_slipping or body.is_stunned:
+		return
+	slip_cooldowns[body.player_id] = 2.0
+	var slip_dir = body.velocity.normalized()
+	if slip_dir == Vector2.ZERO:
+		slip_dir = body.facing_direction if body.facing_direction != Vector2.ZERO else Vector2.DOWN
+	body.trigger_slip(slip_dir)

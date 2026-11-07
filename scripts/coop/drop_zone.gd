@@ -48,23 +48,7 @@ func _ready() -> void:
 			prop.frame = 0
 			
 	label = Label.new()
-	label.text = {
-		"remote": "REMOTE → TV",
-		"trash": "HỘP → THÙNG RÁC",
-		"basket": "TAY CẦM → GIỎ",
-		"pillow_1": "GỐI TRÁI",
-		"pillow_2": "GỐI PHẢI",
-		"mop_station": "CẤT CÂY LAU"
-	}.get(target_id, "")
-	label.position = Vector2(-105, -100 if not prop_path.is_empty() else (-70 if category == "pillow" else -55))
-	label.size = Vector2(210, 25)
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", 18)
-	label.add_theme_color_override("font_color", Color.WHITE)
-	label.add_theme_color_override("font_outline_color", Color(0.3, 0.18, 0.1))
-	label.add_theme_constant_override("outline_size", 4)
-	if category == "pillow":
-		label.z_index = 2
+	label.visible = false
 	add_child(label)
 	
 	prompt = Label.new()
@@ -170,7 +154,7 @@ func refresh() -> void:
 			elif target_id == "basket" and incorrect_item == "coop_remote":
 				prompt.text = "REMOTE → TV"
 			else:
-				prompt.text = "SAI MÓN — XEM TÊN BÊN DƯỚI"
+				prompt.text = "SAI VỊ TRÍ ĐẶT ĐỒ"
 			
 	CoopVisualFeedback.sync_place_icon(place_icon, prompt, not keys.is_empty())
 

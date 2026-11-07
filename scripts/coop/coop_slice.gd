@@ -298,7 +298,13 @@ func _animate_placed_item(texture: Texture2D, origin: Vector2, zone: CoopDropZon
 	arena.get_node("YSortArena").add_child(visual)
 	visual.global_position = origin
 	var tween := visual.create_tween()
-	var dest: Vector2 = zone.global_position + (Vector2(0, -45) if zone.target_id == "trash" else Vector2(0, -20))
+	var dest: Vector2 = zone.global_position
+	if zone.target_id == "trash":
+		dest += Vector2(0, -45)
+	elif zone.category == "pillow":
+		dest = zone.global_position
+	else:
+		dest += Vector2(0, -20)
 	tween.tween_property(visual, "global_position", dest, 0.16).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	if zone.target_id == "trash":
 		tween.parallel().tween_property(visual, "scale", Vector2(0.22, 0.22), 0.16)
@@ -388,10 +394,10 @@ func _setup_world() -> void:
 		spots.append(spot)
 	_add_zone(world, "remote", ["coop_remote"], "store", Vector2(620, 345), "")
 	_add_zone(world, "trash", ["coop_trash", "box", "banana", "popcorn", "boba"], "store", Vector2(1510, 415), "res://assets/coop/advanced/trash_bin_anim.png")
-	_add_zone(world, "basket", ["coop_gamepad", "gamepad", "pillow", "wallet", "hammer"], "store", Vector2(380, 455), "res://assets/coop/basket.png")
+	_add_zone(world, "basket", ["coop_gamepad", "gamepad", "pillow", "wallet", "hammer"], "store", Vector2(380, 480), "res://assets/coop/basket.png")
 	var sofa := world.get_node_or_null("Sofa") as Node2D
-	var pillow_1_pos := Vector2(562, 426)
-	var pillow_2_pos := Vector2(678, 426)
+	var pillow_1_pos := Vector2(562, 466)
+	var pillow_2_pos := Vector2(678, 466)
 	if is_instance_valid(sofa):
 		var slot_l := sofa.get_node_or_null("PillowSlotLeft") as Marker2D
 		var slot_r := sofa.get_node_or_null("PillowSlotRight") as Marker2D

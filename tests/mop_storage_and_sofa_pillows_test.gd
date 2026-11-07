@@ -48,7 +48,7 @@ func _ready() -> void:
 	assert(sofa != null, "Sofa must exist")
 	var sofa_back := game.arena.get_node("YSortArena/SofaBack") as Sprite2D
 	assert(sofa_back != null, "SofaBack must exist for natural backrest/cushion Y-sort layer")
-	assert(sofa_back.position.y == 410.0, "SofaBack must be at y=410 to render under pillows")
+	assert(sofa_back.position.y == 450.0, "SofaBack must be at y=450 to render under pillows")
 	assert(sofa_back.texture.resource_path.ends_with("sofa_back_cushion.png"), "SofaBack must use sofa_back_cushion.png")
 	assert(sofa.get_node("Sprite2D").texture.resource_path.ends_with("sofa_front.png"), "Sofa front must use sofa_front.png to occlude pillows")
 
@@ -59,8 +59,8 @@ func _ready() -> void:
 	assert(slot_r.position == Vector2(58, -64), "PillowSlotRight must be at (58, -64) on seat cushion")
 	assert(pillow_1_zone.position == sofa.to_global(slot_l.position), "Pillow 1 zone must align with PillowSlotLeft")
 	assert(pillow_2_zone.position == sofa.to_global(slot_r.position), "Pillow 2 zone must align with PillowSlotRight")
-	assert(pillow_1_zone.position.y == 426.0, "Pillow 1 must sit on seat cushion at y=426, not on backrest or floor")
-	assert(pillow_2_zone.position.y == 426.0, "Pillow 2 must sit on seat cushion at y=426, not on backrest or floor")
+	assert(pillow_1_zone.position.y == 466.0, "Pillow 1 must sit on seat cushion at y=466, not on backrest or floor")
+	assert(pillow_2_zone.position.y == 466.0, "Pillow 2 must sit on seat cushion at y=466, not on backrest or floor")
 
 	# 5. TEST BOY (P1) PICKUP, CARRY & PLACE PILLOW 1
 	p1.pick_up("coop_pillow_1")

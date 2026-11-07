@@ -115,7 +115,7 @@ y_sort_enabled = true
 
 [node name="Rug" type="Sprite2D" parent="YSortArena"]
 z_index = -1
-position = Vector2(620, 440)
+position = Vector2(620, 460)
 texture = ExtResource("14_rug")
 
 [node name="Workstation" type="StaticBody2D" parent="YSortArena"]
@@ -171,11 +171,11 @@ position = Vector2(0, -18)
 shape = SubResource("Shape_CoffeeTableFront")
 
 [node name="SofaBack" type="Sprite2D" parent="YSortArena"]
-position = Vector2(620, 410)
+position = Vector2(620, 450)
 texture = ExtResource("27_sofa_back")
 
 [node name="Sofa" type="StaticBody2D" parent="YSortArena"]
-position = Vector2(620, 490)
+position = Vector2(620, 530)
 collision_layer = 1
 collision_mask = 2
 
@@ -263,7 +263,7 @@ position = Vector2(1060, 540)
 item_type = "pillow"
 
 [node name="ItemBoba" parent="YSortArena" instance=ExtResource("5_item")]
-position = Vector2(475, 500)
+position = Vector2(475, 540)
 item_type = "boba"
 
 [node name="ItemBanana" parent="YSortArena" instance=ExtResource("5_item")]
@@ -275,7 +275,7 @@ position = Vector2(620, 345)
 item_type = "popcorn"
 
 [node name="ItemGamepad" parent="YSortArena" instance=ExtResource("5_item")]
-position = Vector2(540, 330)
+position = Vector2(550, 345)
 item_type = "gamepad"
 
 [node name="ItemWallet" parent="YSortArena" instance=ExtResource("5_item")]
