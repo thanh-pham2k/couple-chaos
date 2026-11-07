@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://djrubkusscphv"
-path="res://.godot/imported/batch_05_living_furniture.png-a99a6643665933945376d66f44a69805.ctex"
+path="res://.godot/imported/batch_05_living_furniture.png-014c48e0ca5951823fac900ee61fe812.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://asset/archive/batch_05_living_furniture.png"
-dest_files=["res://.godot/imported/batch_05_living_furniture.png-a99a6643665933945376d66f44a69805.ctex"]
+dest_files=["res://.godot/imported/batch_05_living_furniture.png-014c48e0ca5951823fac900ee61fe812.ctex"]
 
 [params]
 

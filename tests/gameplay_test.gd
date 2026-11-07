@@ -76,7 +76,11 @@ func _ready() -> void:
 	p1.is_throwing = false
 	p1.trigger_grab() # Grab button when holding throws the item
 	assert(p1.is_throwing, "Player 1 should enter throw state")
-	assert(p1.held_item_type == "", "Player 1 held item should clear after throwing")
+	assert(p1.held_item_type == "pillow", "Player 1 should hold item until release")
+	p1.advance_throw(Player.THROW_RELEASE_TIME - 0.01)
+	assert(p1.held_item_type == "pillow", "Item should remain held during wind-up")
+	p1.advance_throw(0.02)
+	assert(p1.held_item_type == "", "Player 1 held item should clear on release")
 	print("✓ Test 6: Item Throwing physics & projectile launch verified.")
 	p1.is_throwing = false
 	p1.throw_timer = 0.0

@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://1o6rogjxqoab"
-path="res://.godot/imported/batch_00_room_arena.png-d870707e364eecc673dea5bc1e1f02e4.ctex"
+path="res://.godot/imported/batch_00_room_arena.png-480b8022f347731834aea93d52d918a8.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://asset/archive/batch_00_room_arena.png"
-dest_files=["res://.godot/imported/batch_00_room_arena.png-d870707e364eecc673dea5bc1e1f02e4.ctex"]
+dest_files=["res://.godot/imported/batch_00_room_arena.png-480b8022f347731834aea93d52d918a8.ctex"]
 
 [params]
 

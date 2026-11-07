@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://38ck7jl0w7xj"
-path="res://.godot/imported/batch_01_boy.png-0c606709853c003c89822b148ea0738a.ctex"
+path="res://.godot/imported/batch_01_boy.png-e9e7b441e0deb348eff8975a905cf033.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://asset/archive/batch_01_boy.png"
-dest_files=["res://.godot/imported/batch_01_boy.png-0c606709853c003c89822b148ea0738a.ctex"]
+dest_files=["res://.godot/imported/batch_01_boy.png-e9e7b441e0deb348eff8975a905cf033.ctex"]
 
 [params]
 

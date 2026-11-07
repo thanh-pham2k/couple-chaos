@@ -31,6 +31,10 @@ var attack_timer: float = 0.0
 
 var is_throwing: bool = false
 var throw_timer: float = 0.0
+var throw_direction: Vector2 = Vector2.RIGHT
+var throw_released: bool = false
+const THROW_DURATION: float = 0.28
+const THROW_RELEASE_TIME: float = THROW_DURATION * 4.0 / 6.0
 
 # 4-Phase Knockback & Stun State Machine
 enum KnockbackState { NONE, AIRBORNE, LANDING, STUNNED, GETTING_UP }
@@ -67,6 +71,9 @@ var idle_anim_time: float = 0.0
 @onready var stun_stars: Sprite2D = $StunStars
 
 var textures: Dictionary = {}
+var character_animations: Dictionary = {}
+var character_animation_key: String = ""
+var character_animation_time: float = 0.0
 var attack_tween: Tween = null
 
 func _ready() -> void:
@@ -94,14 +101,71 @@ func load_character_textures() -> void:
 			if ResourceLoader.exists(path_base + "idle.png"):
 				textures[p] = load(path_base + "idle.png")
 
+	for action in ["carry_run", "throw"]:
+		for direction in ["down", "right", "up"]:
+			var key = action + "_" + direction
+			var file_path = path_base + "animations/" + key + ".png"
+			if ResourceLoader.exists(file_path):
+				var sheet = load(file_path) as Texture2D
+				if sheet and sheet.get_width() == 768 and sheet.get_height() == 160:
+					character_animations[key] = sheet
+
+func update_character_animation(action: String, delta: float) -> bool:
+	if not sprite:
+		return false
+	var dir := facing_direction
+	var facing := "right" if absf(dir.x) > absf(dir.y) else ("up" if dir.y < 0.0 else "down")
+	var key := action + "_" + facing
+	if not character_animations.has(key):
+		return false
+	if character_animation_key != key:
+		character_animation_key = key
+		character_animation_time = 0.0
+		sprite.hframes = 1
+		sprite.frame = 0
+		sprite.texture = character_animations[key]
+		sprite.hframes = 6
+		sprite.position = Vector2(0, -70)
+		sprite.scale = Vector2.ONE
+		sprite.rotation = 0.0
+	sprite.flip_h = facing == "right" and dir.x < 0.0
+	character_animation_time += delta
+	sprite.position.y = -70.0
+	if action == "throw":
+		sprite.frame = mini(int(character_animation_time / 0.28 * 6.0), 5)
+	else:
+		sprite.frame = int(character_animation_time * 10.0) % 6
+	update_weapon_transform()
+	return true
+
 func update_weapon_transform() -> void:
-	var is_facing_left = (facing_direction.x < 0) or (sprite and sprite.flip_h)
+	var is_facing_left = (sprite.flip_h if character_animation_key != "" and sprite else ((facing_direction.x < 0) or (sprite and sprite.flip_h)))
 	if weapon_pivot:
 		weapon_pivot.position = Vector2(-24, -62) if is_facing_left else Vector2(24, -62)
 		weapon_pivot.scale = Vector2(-1.0 if is_facing_left else 1.0, 1.0)
 	if carry_pivot:
 		carry_pivot.position = Vector2(-25, -70) if is_facing_left else Vector2(25, -70)
 		carry_pivot.scale = Vector2(-1.0 if is_facing_left else 1.0, 1.0)
+		carry_pivot.z_index = 0
+		if character_animation_key != "":
+			var facing := "up" if character_animation_key.ends_with("_up") else ("right" if character_animation_key.ends_with("_right") else "down")
+			# Coordinates follow the drawn hands relative to the 150px foot anchor.
+			var hand_position := Vector2(0, -50)
+			if facing == "right":
+				hand_position = Vector2(30, -50)
+			elif facing == "up":
+				hand_position = Vector2(0, -52)
+				carry_pivot.z_index = -1
+			if character_animation_key.begins_with("throw_"):
+				if facing == "down":
+					var x_offsets = [0.0, 0.0, 20.0, -24.0, -26.0, 0.0]
+					hand_position.x = x_offsets[sprite.frame]
+				elif facing == "right":
+					var x_offsets = [14.0, 22.0, 30.0, 34.0, 34.0, 15.0]
+					hand_position.x = x_offsets[sprite.frame]
+			if is_facing_left:
+				hand_position.x = -hand_position.x
+			carry_pivot.position = hand_position
 
 func _physics_process(delta: float) -> void:
 	# 1. Regenerate stamina
@@ -173,7 +237,8 @@ func _physics_process(delta: float) -> void:
 
 	# 7. Handle Throw animation lockout
 	if is_throwing:
-		throw_timer -= delta
+		update_character_animation("throw", delta)
+		advance_throw(delta)
 		velocity = Vector2.ZERO
 		move_and_slide()
 		if throw_timer <= 0.0:
@@ -216,9 +281,11 @@ func _physics_process(delta: float) -> void:
 
 		# Visual pose
 		if held_item_type == "hammer":
+			# The available carry pose is for small items, not a two-handed hammer.
 			update_sprite_pose("run")
 		elif held_item_type != "":
-			update_sprite_pose("carry")
+			if not update_character_animation("carry_run", delta):
+				update_sprite_pose("carry")
 		else:
 			update_sprite_pose("run")
 	else:
@@ -480,6 +547,13 @@ func trigger_grab() -> void:
 
 func update_sprite_pose(pose_name: String) -> void:
 	if textures.has(pose_name) and sprite:
+		if character_animation_key != "":
+			character_animation_key = ""
+			character_animation_time = 0.0
+			sprite.hframes = 1
+			sprite.frame = 0
+			sprite.position.y = -80.0
+			update_weapon_transform()
 		sprite.texture = textures[pose_name]
 
 func pick_up(item_name: String) -> void:
@@ -517,21 +591,26 @@ func pick_up(item_name: String) -> void:
 	chaos_event.emit(player_id.to_upper() + " nhặt được " + item_name.to_upper() + "!")
 
 func throw_held_item() -> void:
-	if held_item_type == "":
+	if held_item_type == "" or is_throwing:
 		return
-
 	is_throwing = true
-	throw_timer = 0.28
+	throw_timer = THROW_DURATION
+	throw_released = false
+	throw_direction = move_direction if move_direction != Vector2.ZERO else facing_direction
 	update_sprite_pose("throw")
 
-	var throw_dir = facing_direction
-	if move_direction != Vector2.ZERO:
-		throw_dir = move_direction
-
-	var spawn_pos = global_position + Vector2(0, -60) + throw_dir * 35.0
-	spawn_flying_item(held_item_type, spawn_pos, throw_dir)
-	chaos_event.emit(player_id.to_upper() + " ném " + held_item_type.to_upper() + " vèo qua phòng!")
-	clear_held_item()
+func advance_throw(delta: float) -> void:
+	if not is_throwing:
+		return
+	throw_timer -= delta
+	if not throw_released and THROW_DURATION - throw_timer >= THROW_RELEASE_TIME:
+		throw_released = true
+		if held_item_type != "":
+			var item_to_throw = held_item_type
+			var spawn_pos = global_position + Vector2(0, -60) + throw_direction * 35.0
+			spawn_flying_item(item_to_throw, spawn_pos, throw_direction)
+			chaos_event.emit(player_id.to_upper() + " ném " + item_to_throw.to_upper() + " vèo qua phòng!")
+			clear_held_item()
 
 func drop_as_hazard(hazard_name: String) -> void:
 	var hazard_scene = load("res://scenes/hazard.tscn")
@@ -590,6 +669,10 @@ func take_knockback_hit(damage: int, stun: bool, hit_dir: Vector2, force: float 
 		hearts = max(0, hearts - damage)
 		hearts_changed.emit(player_id, hearts)
 
+	# An interrupted throw drops the item and cannot release a projectile later.
+	is_throwing = false
+	throw_timer = 0.0
+	throw_released = true
 	# Drop held item upon receiving impact
 	if held_item_type != "":
 		drop_held_item()
@@ -622,6 +705,9 @@ func drop_held_item() -> void:
 func trigger_slip(dir: Vector2) -> void:
 	if is_slipping or is_stunned or knockback_state != KnockbackState.NONE:
 		return
+	is_throwing = false
+	throw_timer = 0.0
+	throw_released = true
 	is_slipping = true
 	slip_timer = 0.6
 	slip_dir = dir if dir != Vector2.ZERO else facing_direction

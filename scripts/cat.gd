@@ -17,6 +17,12 @@ const RUN_SPEED: float = 460.0
 @onready var detection_area: Area2D = $DetectionArea
 
 var textures: Dictionary = {}
+var animation_sheets: Dictionary = {}
+var animation_key: String = ""
+var animation_clock: float = 0.0
+const FRAME_COUNTS := {"walk": 6, "run": 8, "panic": 8, "idle": 4, "sleep": 4, "startled": 4, "hiss": 4}
+const FRAME_RATES := {"walk": 8.0, "run": 12.0, "panic": 14.0, "idle": 4.0, "sleep": 4.0, "startled": 12.0, "hiss": 6.0}
+
 
 func _ready() -> void:
 	load_textures()
@@ -31,10 +37,77 @@ func load_textures() -> void:
 		var p = path_base + s + ".png"
 		if ResourceLoader.exists(p):
 			textures[s] = load(p)
+	for action in ["walk", "run", "panic", "idle"]:
+		for direction in ["down", "right", "up"]:
+			var key = action + "_" + direction
+			var sheet_path = path_base + "animations/" + key + ".png"
+			if ResourceLoader.exists(sheet_path):
+				var sheet = load(sheet_path) as Texture2D
+				if sheet and sheet.get_width() == int(FRAME_COUNTS[action]) * 64 and sheet.get_height() == 64:
+					animation_sheets[key] = sheet
+	for action in ["sleep", "startled", "hiss"]:
+		var sheet_path = path_base + "animations/" + action + ".png"
+		if ResourceLoader.exists(sheet_path):
+			var sheet = load(sheet_path) as Texture2D
+			if sheet and sheet.get_width() == 256 and sheet.get_height() == 64:
+				animation_sheets[action] = sheet
+
+func update_animation(delta: float, direction: Vector2 = Vector2.ZERO) -> void:
+	if not sprite:
+		return
+	var action := ""
+	match current_state:
+		State.SLEEP: action = "sleep"
+		State.WANDER: action = "walk"
+		State.STARTLED: action = "startled"
+		State.RUN: action = "panic"
+		State.HISS: action = "hiss"
+	var key := action
+	if action == "walk" or action == "panic":
+		if direction == Vector2.ZERO:
+			direction = move_dir
+		var facing := "right" if absf(direction.x) > absf(direction.y) else ("up" if direction.y < 0.0 else "down")
+		key += "_" + facing
+		if action == "panic" and not animation_sheets.has(key):
+			key = "run_" + facing
+		if facing == "right":
+			sprite.flip_h = direction.x < 0.0
+		else:
+			sprite.flip_h = false
+	if not animation_sheets.has(key):
+		if animation_key != "":
+			animation_key = ""
+			sprite.hframes = 1
+			sprite.frame = 0
+			update_visual()
+		return
+	if animation_key != key:
+		animation_key = key
+		animation_clock = 0.0
+		sprite.hframes = 1
+		sprite.frame = 0
+		sprite.texture = animation_sheets[key]
+		var actual_action: String = key.get_slice("_", 0)
+		sprite.hframes = FRAME_COUNTS[actual_action]
+		sprite.position = Vector2(0, -26)
+		sprite.rotation = 0.0
+		sprite.scale = Vector2.ONE
+	var current_action: String = key.get_slice("_", 0)
+	animation_clock += delta
+	var frame_index := int(animation_clock * float(FRAME_RATES[current_action]))
+	if current_action == "startled":
+		sprite.frame = mini(frame_index, int(FRAME_COUNTS[current_action]) - 1)
+	else:
+		sprite.frame = frame_index % int(FRAME_COUNTS[current_action])
 
 func update_visual() -> void:
 	if not sprite:
 		return
+	animation_key = ""
+	sprite.hframes = 1
+	sprite.frame = 0
+	sprite.scale = Vector2.ONE
+	sprite.position.x = 0.0
 	match current_state:
 		State.SLEEP:
 			if textures.has("sleep"): sprite.texture = textures["sleep"]
@@ -62,8 +135,9 @@ func _physics_process(delta: float) -> void:
 	
 	match current_state:
 		State.SLEEP:
+			update_animation(delta)
 			velocity = Vector2.ZERO
-			if sprite:
+			if sprite and animation_key == "":
 				sprite.scale.y = 1.0 + sin(walk_time * 2.5) * 0.03
 			
 			# Check nearby players to wake up if disturbed
@@ -77,10 +151,12 @@ func _physics_process(delta: float) -> void:
 			# Leisurely stroll
 			var steered_dir = steer_around_obstacles(move_dir)
 			velocity = steered_dir * WANDER_SPEED
-			if steered_dir.x != 0 and sprite:
-				sprite.flip_h = steered_dir.x < 0
-			if sprite:
-				sprite.position.y = -32.0 + sin(walk_time * 12.0) * 2.5
+			update_animation(delta, steered_dir)
+			if animation_key == "":
+				if steered_dir.x != 0 and sprite:
+					sprite.flip_h = steered_dir.x < 0
+				if sprite:
+					sprite.position.y = -32.0 + sin(walk_time * 12.0) * 2.5
 			move_and_slide()
 			
 			# Check if players rush in
@@ -97,9 +173,10 @@ func _physics_process(delta: float) -> void:
 					update_visual()
 
 		State.STARTLED:
+			update_animation(delta)
 			velocity = Vector2.ZERO
 			# Startle shudder
-			if sprite:
+			if sprite and animation_key == "":
 				sprite.position.x = sin(state_timer * 40.0) * 2.0
 			if state_timer <= 0.0:
 				start_running_away()
@@ -112,10 +189,12 @@ func _physics_process(delta: float) -> void:
 			
 			var steered_dir = steer_around_obstacles(escape_vector)
 			velocity = steered_dir * RUN_SPEED
-			if steered_dir.x != 0 and sprite:
-				sprite.flip_h = steered_dir.x < 0
-			if sprite:
-				sprite.position.y = -32.0 + sin(walk_time * 26.0) * 4.0
+			update_animation(delta, steered_dir)
+			if animation_key == "":
+				if steered_dir.x != 0 and sprite:
+					sprite.flip_h = steered_dir.x < 0
+				if sprite:
+					sprite.position.y = -32.0 + sin(walk_time * 26.0) * 4.0
 			
 			move_and_slide()
 			
@@ -132,9 +211,10 @@ func _physics_process(delta: float) -> void:
 				start_wandering()
 
 		State.HISS:
+			update_animation(delta)
 			velocity = Vector2.ZERO
 			# Back arch hiss shake
-			if sprite:
+			if sprite and animation_key == "":
 				sprite.position.x = sin(state_timer * 35.0) * 3.0
 			if state_timer <= 0.0:
 				# Dart away in the clearest available escape direction
