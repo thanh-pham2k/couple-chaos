@@ -28,6 +28,9 @@ var dash_dir: Vector2 = Vector2.RIGHT
 
 var is_attacking: bool = false
 var attack_timer: float = 0.0
+var hammer_hit_pending: bool = false
+const HAMMER_ATTACK_DURATION := 0.36
+const HAMMER_IMPACT_TIME := HAMMER_ATTACK_DURATION * 4.0 / 6.0
 
 var is_throwing: bool = false
 var throw_timer: float = 0.0
@@ -101,13 +104,14 @@ func load_character_textures() -> void:
 			if ResourceLoader.exists(path_base + "idle.png"):
 				textures[p] = load(path_base + "idle.png")
 
-	for action in ["carry_run", "throw"]:
+	for action in ["carry_run", "throw", "hammer_idle", "hammer_run", "hammer_attack"]:
 		for direction in ["down", "right", "up"]:
 			var key = action + "_" + direction
 			var file_path = path_base + "animations/" + key + ".png"
 			if ResourceLoader.exists(file_path):
 				var sheet = load(file_path) as Texture2D
-				if sheet and sheet.get_width() == 768 and sheet.get_height() == 160:
+				var frame_count := 4 if action == "hammer_idle" else 6
+				if sheet and sheet.get_width() == frame_count * 128 and sheet.get_height() == 160:
 					character_animations[key] = sheet
 
 func update_character_animation(action: String, delta: float) -> bool:
@@ -124,15 +128,21 @@ func update_character_animation(action: String, delta: float) -> bool:
 		sprite.hframes = 1
 		sprite.frame = 0
 		sprite.texture = character_animations[key]
-		sprite.hframes = 6
+		sprite.hframes = 4 if action == "hammer_idle" else 6
 		sprite.position = Vector2(0, -70)
 		sprite.scale = Vector2.ONE
 		sprite.rotation = 0.0
 	sprite.flip_h = facing == "right" and dir.x < 0.0
+	if weapon_sprite:
+		weapon_sprite.visible = held_item_type == "hammer" and not action.begins_with("hammer_")
 	character_animation_time += delta
 	sprite.position.y = -70.0
 	if action == "throw":
-		sprite.frame = mini(int(character_animation_time / 0.28 * 6.0), 5)
+		sprite.frame = mini(int(character_animation_time / THROW_DURATION * 6.0), 5)
+	elif action == "hammer_attack":
+		sprite.frame = mini(int(character_animation_time / HAMMER_ATTACK_DURATION * 6.0), 5)
+	elif action == "hammer_idle":
+		sprite.frame = int(character_animation_time * 4.0) % 4
 	else:
 		sprite.frame = int(character_animation_time * 10.0) % 6
 	update_weapon_transform()
@@ -221,6 +231,13 @@ func _physics_process(delta: float) -> void:
 
 	# 6. Handle Attack animation lockout
 	if is_attacking:
+		if hammer_hit_pending:
+			update_character_animation("hammer_attack", delta)
+			if HAMMER_ATTACK_DURATION - (attack_timer - delta) >= HAMMER_IMPACT_TIME:
+				hammer_hit_pending = false
+				perform_melee_hit("hammer")
+		elif held_item_type == "hammer" and character_animation_key.begins_with("hammer_attack_"):
+			update_character_animation("hammer_attack", delta)
 		attack_timer -= delta
 		# Small forward lunge momentum
 		velocity = facing_direction * 160.0
@@ -259,6 +276,10 @@ func _physics_process(delta: float) -> void:
 	# 9. Gather player input
 	read_input()
 
+	# A newly started action owns the visual until its next physics tick.
+	if is_attacking or is_throwing or is_dashing:
+		return
+
 	# 10. Movement & animation execution
 	var current_speed = SPEED * (0.55 if is_slowed else 1.0)
 	if move_direction != Vector2.ZERO:
@@ -281,8 +302,8 @@ func _physics_process(delta: float) -> void:
 
 		# Visual pose
 		if held_item_type == "hammer":
-			# The available carry pose is for small items, not a two-handed hammer.
-			update_sprite_pose("run")
+			if not update_character_animation("hammer_run", delta):
+				update_sprite_pose("run")
 		elif held_item_type != "":
 			if not update_character_animation("carry_run", delta):
 				update_sprite_pose("carry")
@@ -301,7 +322,8 @@ func _physics_process(delta: float) -> void:
 			weapon_pivot.rotation_degrees = 20.0 + sin(idle_anim_time * 3.0) * 3.0
 
 		if held_item_type == "hammer":
-			update_sprite_pose("idle")
+			if not update_character_animation("hammer_idle", delta):
+				update_sprite_pose("idle")
 		elif held_item_type != "":
 			update_sprite_pose("carry")
 		else:
@@ -476,9 +498,11 @@ func trigger_attack() -> void:
 	attack_timer = 0.36
 	
 	if held_item_type == "hammer":
-		# Dynamic multi-phase hammer swing animation & hit registration
-		perform_melee_hit("hammer")
-		animate_hammer_swing()
+		if update_character_animation("hammer_attack", 0.0):
+			hammer_hit_pending = true
+		else:
+			perform_melee_hit("hammer")
+			animate_hammer_swing()
 	elif held_item_type == "pillow":
 		# Pillow swing!
 		perform_melee_hit("pillow")
@@ -555,12 +579,15 @@ func update_sprite_pose(pose_name: String) -> void:
 			sprite.position.y = -80.0
 			update_weapon_transform()
 		sprite.texture = textures[pose_name]
+		if weapon_sprite:
+			weapon_sprite.visible = held_item_type == "hammer"
 
 func pick_up(item_name: String) -> void:
 	if attack_tween and attack_tween.is_valid():
 		attack_tween.kill()
 	is_attacking = false
 	attack_timer = 0.0
+	hammer_hit_pending = false
 
 	held_item_type = item_name
 	item_held_changed.emit(player_id, held_item_type)
@@ -577,6 +604,7 @@ func pick_up(item_name: String) -> void:
 		if held_item_sprite:
 			held_item_sprite.visible = false
 		update_sprite_pose("idle")
+		update_character_animation("hammer_idle", 0.0)
 	else:
 		if weapon_sprite:
 			weapon_sprite.visible = false
@@ -669,6 +697,12 @@ func take_knockback_hit(damage: int, stun: bool, hit_dir: Vector2, force: float 
 		hearts = max(0, hearts - damage)
 		hearts_changed.emit(player_id, hearts)
 
+	# Cancel an interrupted attack so a delayed hit cannot fire later.
+	is_attacking = false
+	attack_timer = 0.0
+	hammer_hit_pending = false
+	if attack_tween and attack_tween.is_valid():
+		attack_tween.kill()
 	# An interrupted throw drops the item and cannot release a projectile later.
 	is_throwing = false
 	throw_timer = 0.0
@@ -708,6 +742,11 @@ func trigger_slip(dir: Vector2) -> void:
 	is_throwing = false
 	throw_timer = 0.0
 	throw_released = true
+	is_attacking = false
+	attack_timer = 0.0
+	hammer_hit_pending = false
+	if attack_tween and attack_tween.is_valid():
+		attack_tween.kill()
 	is_slipping = true
 	slip_timer = 0.6
 	slip_dir = dir if dir != Vector2.ZERO else facing_direction

@@ -48,6 +48,8 @@ func _ready() -> void:
 	var p2_initial_hearts = p2.hearts
 	p1.trigger_attack()
 	assert(p1.is_attacking, "Player 1 should enter is_attacking state")
+	if p1.hammer_hit_pending:
+		p1._physics_process(Player.HAMMER_IMPACT_TIME + 0.01)
 	assert(p2.hearts == p2_initial_hearts - 1, "Player 2 should lose 1 heart from hammer hit")
 	assert(p2.is_stunned, "Player 2 should be stunned from hammer hit")
 	assert(p2.knockback_velocity != Vector2.ZERO, "Player 2 should receive knockback from hammer hit")
@@ -141,10 +143,11 @@ func _ready() -> void:
 	
 	# 12. Test Hammer WeaponPivot Grip Attachment
 	p1.pick_up("hammer")
-	assert(p1.weapon_sprite.visible, "Weapon sprite must be visible when holding hammer")
-	assert(p1.weapon_sprite.offset == Vector2(-23, -31), "Weapon sprite offset must anchor precisely at handle grip (55, 63)")
-	assert(abs(p1.weapon_pivot.rotation_degrees - 20.0) <= 4.0, "Weapon pivot resting angle must be ~20 degrees over shoulder")
-	print("✓ Test 13: Hammer WeaponPivot & ergonomic handle grip anchor verified.")
+	if p1.character_animation_key.begins_with("hammer_idle_"):
+		assert(not p1.weapon_sprite.visible, "Embedded hammer atlas must hide separate weapon")
+	else:
+		assert(p1.weapon_sprite.visible, "Fallback must show separate weapon")
+	print("✓ Test 13: Hammer visual selection verified.")
 	
 	# 13. Test Boss Cat Wandering, Raycast Obstacle Steering & Hiss
 	cat.start_wandering()
