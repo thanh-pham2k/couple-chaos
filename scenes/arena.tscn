@@ -1,0 +1,276 @@
+[gd_scene load_steps=29 format=3]
+
+[ext_resource type="Script" path="res://scripts/arena.gd" id="1_arena"]
+[ext_resource type="Texture2D" path="res://assets/environment/room_arena.png" id="2_bg"]
+[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="3_player"]
+[ext_resource type="PackedScene" path="res://scenes/cat.tscn" id="4_cat"]
+[ext_resource type="PackedScene" path="res://scenes/item.tscn" id="5_item"]
+[ext_resource type="PackedScene" path="res://scenes/hazard.tscn" id="6_hazard"]
+[ext_resource type="PackedScene" path="res://scenes/hud.tscn" id="7_hud"]
+[ext_resource type="PackedScene" path="res://scenes/touch_controls.tscn" id="8_touch"]
+
+[ext_resource type="Texture2D" path="res://assets/furniture/sofa.png" id="9_sofa"]
+[ext_resource type="Texture2D" path="res://assets/furniture/coffee_table.png" id="10_table"]
+[ext_resource type="Texture2D" path="res://assets/furniture/workstation.png" id="11_desk"]
+[ext_resource type="Texture2D" path="res://assets/furniture/office_chair.png" id="12_chair"]
+[ext_resource type="Texture2D" path="res://assets/furniture/tv_console.png" id="13_tv"]
+[ext_resource type="Texture2D" path="res://assets/furniture/rug.png" id="14_rug"]
+[ext_resource type="Texture2D" path="res://assets/furniture/fridge.png" id="15_fridge"]
+[ext_resource type="Texture2D" path="res://assets/furniture/bed.png" id="16_bed"]
+[ext_resource type="Texture2D" path="res://assets/furniture/counter.png" id="17_counter"]
+[ext_resource type="Texture2D" path="res://assets/furniture/dining_set.png" id="18_dining"]
+[ext_resource type="Texture2D" path="res://assets/furniture/entryway.png" id="19_door"]
+
+[sub_resource type="RectangleShape2D" id="Wall_H"]
+size = Vector2(1920, 40)
+
+[sub_resource type="RectangleShape2D" id="Wall_V"]
+size = Vector2(40, 1080)
+
+[sub_resource type="RectangleShape2D" id="Shape_Sofa"]
+size = Vector2(230, 45)
+
+[sub_resource type="RectangleShape2D" id="Shape_Table"]
+size = Vector2(120, 35)
+
+[sub_resource type="RectangleShape2D" id="Shape_Desk"]
+size = Vector2(160, 45)
+
+[sub_resource type="RectangleShape2D" id="Shape_Chair"]
+size = Vector2(60, 30)
+
+[sub_resource type="RectangleShape2D" id="Shape_Bed"]
+size = Vector2(210, 75)
+
+[sub_resource type="RectangleShape2D" id="Shape_Fridge"]
+size = Vector2(100, 45)
+
+[sub_resource type="RectangleShape2D" id="Shape_Counter"]
+size = Vector2(190, 45)
+
+[node name="Arena" type="Node2D"]
+script = ExtResource("1_arena")
+
+[node name="RoomBackground" type="Sprite2D" parent="."]
+z_index = -10
+position = Vector2(960, 540)
+texture = ExtResource("2_bg")
+
+[node name="Boundaries" type="StaticBody2D" parent="."]
+collision_layer = 1
+collision_mask = 2
+
+[node name="WallTop" type="CollisionShape2D" parent="Boundaries"]
+position = Vector2(960, 220)
+shape = SubResource("Wall_H")
+
+[node name="WallBottom" type="CollisionShape2D" parent="Boundaries"]
+position = Vector2(960, 1060)
+shape = SubResource("Wall_H")
+
+[node name="WallLeft" type="CollisionShape2D" parent="Boundaries"]
+position = Vector2(50, 540)
+shape = SubResource("Wall_V")
+
+[node name="WallRight" type="CollisionShape2D" parent="Boundaries"]
+position = Vector2(1870, 540)
+shape = SubResource("Wall_V")
+
+[node name="YSortArena" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Rug" type="Sprite2D" parent="YSortArena"]
+z_index = -1
+position = Vector2(780, 480)
+texture = ExtResource("14_rug")
+
+[node name="Workstation" type="StaticBody2D" parent="YSortArena"]
+position = Vector2(250, 230)
+collision_layer = 1
+collision_mask = 2
+
+[node name="Sprite2D" type="Sprite2D" parent="YSortArena/Workstation"]
+position = Vector2(0, -70)
+texture = ExtResource("11_desk")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="YSortArena/Workstation"]
+position = Vector2(0, -20)
+shape = SubResource("Shape_Desk")
+
+[node name="OfficeChair" type="StaticBody2D" parent="YSortArena"]
+position = Vector2(250, 290)
+collision_layer = 1
+collision_mask = 2
+
+[node name="Sprite2D" type="Sprite2D" parent="YSortArena/OfficeChair"]
+position = Vector2(0, -45)
+texture = ExtResource("12_chair")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="YSortArena/OfficeChair"]
+position = Vector2(0, -15)
+shape = SubResource("Shape_Chair")
+
+[node name="TVConsole" type="StaticBody2D" parent="YSortArena"]
+position = Vector2(620, 230)
+collision_layer = 1
+collision_mask = 2
+
+[node name="Sprite2D" type="Sprite2D" parent="YSortArena/TVConsole"]
+position = Vector2(0, -80)
+texture = ExtResource("13_tv")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="YSortArena/TVConsole"]
+position = Vector2(0, -20)
+shape = SubResource("Shape_Desk")
+
+[node name="Entryway" type="StaticBody2D" parent="YSortArena"]
+position = Vector2(1050, 220)
+collision_layer = 1
+collision_mask = 2
+
+[node name="Sprite2D" type="Sprite2D" parent="YSortArena/Entryway"]
+position = Vector2(0, -95)
+texture = ExtResource("19_door")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="YSortArena/Entryway"]
+position = Vector2(0, -20)
+shape = SubResource("Shape_Table")
+
+[node name="CoffeeTable" type="StaticBody2D" parent="YSortArena"]
+position = Vector2(720, 460)
+collision_layer = 1
+collision_mask = 2
+
+[node name="Sprite2D" type="Sprite2D" parent="YSortArena/CoffeeTable"]
+position = Vector2(0, -45)
+texture = ExtResource("10_table")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="YSortArena/CoffeeTable"]
+position = Vector2(0, -18)
+shape = SubResource("Shape_Table")
+
+[node name="Sofa" type="StaticBody2D" parent="YSortArena"]
+position = Vector2(880, 490)
+collision_layer = 1
+collision_mask = 2
+
+[node name="Sprite2D" type="Sprite2D" parent="YSortArena/Sofa"]
+position = Vector2(0, -80)
+texture = ExtResource("9_sofa")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="YSortArena/Sofa"]
+position = Vector2(0, -22)
+shape = SubResource("Shape_Sofa")
+
+[node name="Bed" type="StaticBody2D" parent="YSortArena"]
+position = Vector2(240, 840)
+collision_layer = 1
+collision_mask = 2
+
+[node name="Sprite2D" type="Sprite2D" parent="YSortArena/Bed"]
+position = Vector2(0, -120)
+texture = ExtResource("16_bed")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="YSortArena/Bed"]
+position = Vector2(0, -35)
+shape = SubResource("Shape_Bed")
+
+[node name="Counter" type="StaticBody2D" parent="YSortArena"]
+position = Vector2(1540, 230)
+collision_layer = 1
+collision_mask = 2
+
+[node name="Sprite2D" type="Sprite2D" parent="YSortArena/Counter"]
+position = Vector2(0, -75)
+texture = ExtResource("17_counter")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="YSortArena/Counter"]
+position = Vector2(0, -22)
+shape = SubResource("Shape_Counter")
+
+[node name="Fridge" type="StaticBody2D" parent="YSortArena"]
+position = Vector2(1800, 230)
+collision_layer = 1
+collision_mask = 2
+
+[node name="Sprite2D" type="Sprite2D" parent="YSortArena/Fridge"]
+position = Vector2(0, -100)
+texture = ExtResource("15_fridge")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="YSortArena/Fridge"]
+position = Vector2(0, -22)
+shape = SubResource("Shape_Fridge")
+
+[node name="DiningSet" type="StaticBody2D" parent="YSortArena"]
+position = Vector2(1640, 560)
+collision_layer = 1
+collision_mask = 2
+
+[node name="Sprite2D" type="Sprite2D" parent="YSortArena/DiningSet"]
+position = Vector2(0, -70)
+texture = ExtResource("18_dining")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="YSortArena/DiningSet"]
+position = Vector2(0, -22)
+shape = SubResource("Shape_Desk")
+
+[node name="Player1" parent="YSortArena" instance=ExtResource("3_player")]
+position = Vector2(580, 680)
+player_id = "p1"
+character_type = "boy"
+
+[node name="Player2" parent="YSortArena" instance=ExtResource("3_player")]
+position = Vector2(1180, 680)
+player_id = "p2"
+character_type = "girl"
+
+[node name="BossCat" parent="YSortArena" instance=ExtResource("4_cat")]
+position = Vector2(880, 720)
+
+[node name="ItemHammer" parent="YSortArena" instance=ExtResource("5_item")]
+position = Vector2(950, 640)
+item_type = "hammer"
+
+[node name="ItemPillow" parent="YSortArena" instance=ExtResource("5_item")]
+position = Vector2(880, 450)
+item_type = "pillow"
+
+[node name="ItemBoba" parent="YSortArena" instance=ExtResource("5_item")]
+position = Vector2(720, 420)
+item_type = "boba"
+
+[node name="ItemBanana" parent="YSortArena" instance=ExtResource("5_item")]
+position = Vector2(1640, 500)
+item_type = "banana"
+
+[node name="ItemPopcorn" parent="YSortArena" instance=ExtResource("5_item")]
+position = Vector2(620, 270)
+item_type = "popcorn"
+
+[node name="ItemGamepad" parent="YSortArena" instance=ExtResource("5_item")]
+position = Vector2(580, 240)
+item_type = "gamepad"
+
+[node name="ItemWallet" parent="YSortArena" instance=ExtResource("5_item")]
+position = Vector2(280, 240)
+item_type = "wallet"
+
+[node name="ItemBox" parent="YSortArena" instance=ExtResource("5_item")]
+position = Vector2(1050, 270)
+item_type = "box"
+
+[node name="BananaHazard" parent="YSortArena" instance=ExtResource("6_hazard")]
+position = Vector2(760, 740)
+hazard_type = "banana_peel"
+
+[node name="BobaHazard" parent="YSortArena" instance=ExtResource("6_hazard")]
+position = Vector2(1360, 620)
+hazard_type = "boba_puddle"
+
+[node name="HUD" parent="." instance=ExtResource("7_hud")]
+
+[node name="TouchControlsLayer" type="CanvasLayer" parent="."]
+layer = 10
+
+[node name="TouchControls" parent="TouchControlsLayer" instance=ExtResource("8_touch")]
+target_player_path = NodePath("../../YSortArena/Player1")

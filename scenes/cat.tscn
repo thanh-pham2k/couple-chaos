@@ -1,0 +1,30 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/cat.gd" id="1_cat"]
+[ext_resource type="Texture2D" path="res://assets/pets/cat/sleep.png" id="2_cat_tex"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_cat_body"]
+radius = 24.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_cat_detect"]
+radius = 110.0
+
+[node name="BossCat" type="CharacterBody2D" groups=["boss_cat", "npcs"]]
+collision_layer = 2
+collision_mask = 7
+script = ExtResource("1_cat")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -32)
+texture = ExtResource("2_cat_tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -14)
+shape = SubResource("CircleShape2D_cat_body")
+
+[node name="DetectionArea" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="DetectionArea"]
+shape = SubResource("CircleShape2D_cat_detect")

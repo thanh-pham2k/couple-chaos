@@ -1,0 +1,104 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/touch_controls.gd" id="1_touch"]
+[ext_resource type="Texture2D" path="res://assets/ui/joystick_base.png" id="2_jbase"]
+[ext_resource type="Texture2D" path="res://assets/ui/joystick_stick.png" id="3_jstick"]
+[ext_resource type="Texture2D" path="res://assets/ui/btn_hammer.png" id="4_bhammer"]
+[ext_resource type="Texture2D" path="res://assets/ui/btn_dash.png" id="5_bdash"]
+[ext_resource type="Texture2D" path="res://assets/ui/btn_grab.png" id="6_bgrab"]
+
+[node name="TouchControls" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+script = ExtResource("1_touch")
+
+[node name="JoystickBase" type="TextureRect" parent="."]
+modulate = Color(1, 1, 1, 0.55)
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 60.0
+offset_top = -200.0
+offset_right = 200.0
+offset_bottom = -60.0
+grow_vertical = 0
+texture = ExtResource("2_jbase")
+expand_mode = 1
+
+[node name="JoystickStick" type="TextureRect" parent="JoystickBase"]
+layout_mode = 0
+offset_left = 40.0
+offset_top = 40.0
+offset_right = 100.0
+offset_bottom = 100.0
+texture = ExtResource("3_jstick")
+expand_mode = 1
+
+[node name="ButtonsContainer" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -280.0
+offset_top = -240.0
+offset_right = -30.0
+offset_bottom = -30.0
+grow_horizontal = 0
+grow_vertical = 0
+
+[node name="BtnHammer" type="TextureButton" parent="ButtonsContainer"]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -84.0
+offset_top = -84.0
+grow_horizontal = 0
+grow_vertical = 0
+texture_normal = ExtResource("4_bhammer")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="BtnDash" type="TextureButton" parent="ButtonsContainer"]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -170.0
+offset_top = -68.0
+offset_right = -106.0
+offset_bottom = -4.0
+grow_horizontal = 0
+grow_vertical = 0
+texture_normal = ExtResource("5_bdash")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="BtnGrab" type="TextureButton" parent="ButtonsContainer"]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -84.0
+offset_top = -170.0
+offset_right = -20.0
+offset_bottom = -106.0
+grow_horizontal = 0
+grow_vertical = 0
+texture_normal = ExtResource("6_bgrab")
+ignore_texture_size = true
+stretch_mode = 0
