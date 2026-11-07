@@ -1,0 +1,29 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/furniture/modular/tv/console.png" id="1"]
+[ext_resource type="Texture2D" path="res://assets/furniture/modular/tv/screen.png" id="2"]
+[ext_resource type="Texture2D" path="res://assets/furniture/modular/tv/plant.png" id="3"]
+[ext_resource type="Texture2D" path="res://assets/furniture/modular/tv/game_console.png" id="4"]
+[ext_resource type="Texture2D" path="res://assets/furniture/modular/tv/controller.png" id="5"]
+
+[node name="tv_modular" type="Node2D"]
+
+[node name="Console" type="Sprite2D" parent="."]
+position = Vector2(0, -55)
+texture = ExtResource("1")
+
+[node name="Screen" type="Sprite2D" parent="."]
+position = Vector2(-6, -138)
+texture = ExtResource("2")
+
+[node name="Plant" type="Sprite2D" parent="."]
+position = Vector2(-66, -111)
+texture = ExtResource("3")
+
+[node name="GameConsole" type="Sprite2D" parent="."]
+position = Vector2(63, -88)
+texture = ExtResource("4")
+
+[node name="Controller" type="Sprite2D" parent="."]
+position = Vector2(43, -86)
+texture = ExtResource("5")

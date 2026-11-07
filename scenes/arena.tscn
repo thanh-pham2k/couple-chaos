@@ -1,4 +1,4 @@
-[gd_scene load_steps=29 format=3]
+[gd_scene load_steps=36 format=3]
 
 [ext_resource type="Script" path="res://scripts/arena.gd" id="1_arena"]
 [ext_resource type="Texture2D" path="res://assets/environment/room_arena.png" id="2_bg"]
@@ -9,10 +9,10 @@
 [ext_resource type="PackedScene" path="res://scenes/hud.tscn" id="7_hud"]
 [ext_resource type="PackedScene" path="res://scenes/touch_controls.tscn" id="8_touch"]
 
-[ext_resource type="Texture2D" path="res://assets/furniture/sofa.png" id="9_sofa"]
+[ext_resource type="Texture2D" path="res://assets/furniture/sofa_back.png" id="9_sofa"]
 [ext_resource type="Texture2D" path="res://assets/furniture/coffee_table.png" id="10_table"]
 [ext_resource type="Texture2D" path="res://assets/furniture/workstation.png" id="11_desk"]
-[ext_resource type="Texture2D" path="res://assets/furniture/office_chair.png" id="12_chair"]
+[ext_resource type="Texture2D" path="res://assets/furniture/office_chair_back.png" id="12_chair"]
 [ext_resource type="Texture2D" path="res://assets/furniture/tv_console.png" id="13_tv"]
 [ext_resource type="Texture2D" path="res://assets/furniture/rug.png" id="14_rug"]
 [ext_resource type="Texture2D" path="res://assets/furniture/fridge.png" id="15_fridge"]
@@ -20,6 +20,16 @@
 [ext_resource type="Texture2D" path="res://assets/furniture/counter.png" id="17_counter"]
 [ext_resource type="Texture2D" path="res://assets/furniture/dining_set.png" id="18_dining"]
 [ext_resource type="Texture2D" path="res://assets/furniture/entryway.png" id="19_door"]
+[ext_resource type="PackedScene" path="res://scenes/workstation_front.tscn" id="20_work"]
+[ext_resource type="PackedScene" path="res://scenes/tv_front.tscn" id="21_tv"]
+[ext_resource type="PackedScene" path="res://scenes/counter_front.tscn" id="22_counter"]
+[ext_resource type="PackedScene" path="res://scenes/bed_modular.tscn" id="23_bed"]
+[ext_resource type="PackedScene" path="res://scenes/door_modular.tscn" id="24_door"]
+[ext_resource type="PackedScene" path="res://scenes/aircon_front.tscn" id="25_aircon"]
+
+[sub_resource type="AtlasTexture" id="WallPatch"]
+atlas = ExtResource("2_bg")
+region = Rect2(1150, 24, 184, 218)
 
 [sub_resource type="RectangleShape2D" id="Wall_H"]
 size = Vector2(1920, 40)
@@ -56,6 +66,14 @@ z_index = -10
 position = Vector2(960, 540)
 texture = ExtResource("2_bg")
 
+[node name="DoorWallPatch" type="Sprite2D" parent="."]
+z_index = -9
+position = Vector2(1050, 133)
+texture = SubResource("WallPatch")
+
+[node name="Aircon" parent="." instance=ExtResource("25_aircon")]
+position = Vector2(1300, 145)
+
 [node name="Boundaries" type="StaticBody2D" parent="."]
 collision_layer = 1
 collision_mask = 2
@@ -81,17 +99,15 @@ y_sort_enabled = true
 
 [node name="Rug" type="Sprite2D" parent="YSortArena"]
 z_index = -1
-position = Vector2(780, 480)
+position = Vector2(620, 490)
 texture = ExtResource("14_rug")
 
 [node name="Workstation" type="StaticBody2D" parent="YSortArena"]
-position = Vector2(250, 285)
+position = Vector2(250, 260)
 collision_layer = 1
 collision_mask = 2
 
-[node name="Sprite2D" type="Sprite2D" parent="YSortArena/Workstation"]
-position = Vector2(0, -70)
-texture = ExtResource("11_desk")
+[node name="Visual" parent="YSortArena/Workstation" instance=ExtResource("20_work")]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="YSortArena/Workstation"]
 position = Vector2(0, -20)
@@ -111,33 +127,22 @@ position = Vector2(0, -15)
 shape = SubResource("Shape_Chair")
 
 [node name="TVConsole" type="StaticBody2D" parent="YSortArena"]
-position = Vector2(620, 285)
+position = Vector2(620, 260)
 collision_layer = 1
 collision_mask = 2
 
-[node name="Sprite2D" type="Sprite2D" parent="YSortArena/TVConsole"]
-position = Vector2(0, -80)
-texture = ExtResource("13_tv")
+[node name="Visual" parent="YSortArena/TVConsole" instance=ExtResource("21_tv")]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="YSortArena/TVConsole"]
 position = Vector2(0, -20)
 shape = SubResource("Shape_Desk")
 
-[node name="Entryway" type="StaticBody2D" parent="YSortArena"]
-position = Vector2(1050, 220)
-collision_layer = 1
-collision_mask = 2
-
-[node name="Sprite2D" type="Sprite2D" parent="YSortArena/Entryway"]
-position = Vector2(0, -95)
-texture = ExtResource("19_door")
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="YSortArena/Entryway"]
-position = Vector2(0, -20)
-shape = SubResource("Shape_Table")
+[node name="Entryway" parent="YSortArena" instance=ExtResource("24_door")]
+position = Vector2(1050, 240)
+scale = Vector2(1.12, 1.12)
 
 [node name="CoffeeTable" type="StaticBody2D" parent="YSortArena"]
-position = Vector2(650, 485)
+position = Vector2(800, 395)
 collision_layer = 1
 collision_mask = 2
 
@@ -150,7 +155,7 @@ position = Vector2(0, -18)
 shape = SubResource("Shape_Table")
 
 [node name="Sofa" type="StaticBody2D" parent="YSortArena"]
-position = Vector2(880, 490)
+position = Vector2(620, 490)
 collision_layer = 1
 collision_mask = 2
 
@@ -162,31 +167,11 @@ texture = ExtResource("9_sofa")
 position = Vector2(0, -22)
 shape = SubResource("Shape_Sofa")
 
-[node name="Bed" type="StaticBody2D" parent="YSortArena"]
+[node name="Bed" parent="YSortArena" instance=ExtResource("23_bed")]
 position = Vector2(240, 840)
-collision_layer = 1
-collision_mask = 2
 
-[node name="Sprite2D" type="Sprite2D" parent="YSortArena/Bed"]
-position = Vector2(0, -120)
-texture = ExtResource("16_bed")
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="YSortArena/Bed"]
-position = Vector2(0, -65)
-shape = SubResource("Shape_Bed")
-
-[node name="Counter" type="StaticBody2D" parent="YSortArena"]
-position = Vector2(1540, 285)
-collision_layer = 1
-collision_mask = 2
-
-[node name="Sprite2D" type="Sprite2D" parent="YSortArena/Counter"]
-position = Vector2(0, -75)
-texture = ExtResource("17_counter")
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="YSortArena/Counter"]
-position = Vector2(0, -22)
-shape = SubResource("Shape_Counter")
+[node name="Counter" parent="YSortArena" instance=ExtResource("22_counter")]
+position = Vector2(1540, 260)
 
 [node name="Fridge" type="StaticBody2D" parent="YSortArena"]
 position = Vector2(1800, 285)

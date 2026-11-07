@@ -1,0 +1,29 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/furniture/modular/workstation/desk.png" id="1"]
+[ext_resource type="Texture2D" path="res://assets/furniture/modular/workstation/books.png" id="2"]
+[ext_resource type="Texture2D" path="res://assets/furniture/modular/workstation/laptop.png" id="3"]
+[ext_resource type="Texture2D" path="res://assets/furniture/modular/workstation/lamp.png" id="4"]
+[ext_resource type="Texture2D" path="res://assets/furniture/modular/workstation/mug.png" id="5"]
+
+[node name="workstation_modular" type="Node2D"]
+
+[node name="Desk" type="Sprite2D" parent="."]
+position = Vector2(0, -69)
+texture = ExtResource("1")
+
+[node name="Books" type="Sprite2D" parent="."]
+position = Vector2(-50, -107)
+texture = ExtResource("2")
+
+[node name="Laptop" type="Sprite2D" parent="."]
+position = Vector2(-5, -112)
+texture = ExtResource("3")
+
+[node name="Lamp" type="Sprite2D" parent="."]
+position = Vector2(48, -108)
+texture = ExtResource("4")
+
+[node name="Mug" type="Sprite2D" parent="."]
+position = Vector2(33, -81)
+texture = ExtResource("5")
