@@ -13,7 +13,7 @@ import numpy as np
 import scipy.ndimage as ndi
 from PIL import Image
 
-INBOX_DIR = "asset/inbox"
+INBOX_DIR = "asset/archive/inbox_archive" if os.path.exists("asset/archive/inbox_archive") else "asset/inbox"
 OUT_BASE = "assets"
 
 def make_transparent_border_floodfill(pil_img, white_thresh=242):

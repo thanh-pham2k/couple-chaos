@@ -6,7 +6,7 @@ from PIL import Image
 from scipy import ndimage
 
 ROOT = Path(__file__).resolve().parent.parent
-INBOX = ROOT / 'asset/inbox'
+INBOX = ROOT / 'asset/archive/inbox_archive' if (ROOT / 'asset/archive/inbox_archive').exists() else ROOT / 'asset/inbox'
 OUTPUT = ROOT / 'assets/coop'
 OUTPUT.mkdir(parents=True, exist_ok=True)
 

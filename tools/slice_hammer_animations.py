@@ -10,7 +10,7 @@ from PIL import Image
 from scipy import ndimage
 
 ROOT = Path(__file__).resolve().parent.parent
-SOURCE = ROOT / 'asset/inbox/image.png'
+SOURCE = (ROOT / 'asset/archive/inbox_archive/image.png') if (ROOT / 'asset/archive/inbox_archive/image.png').exists() else (ROOT / 'asset/inbox/image.png')
 DIRECTIONS = ('down', 'right', 'up')
 ROWS = {'idle': ((0, 130), (130, 258), (258, 390)),
         'run': ((390, 507), (507, 615), (615, 735))}

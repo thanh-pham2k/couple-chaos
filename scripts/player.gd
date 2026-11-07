@@ -26,6 +26,8 @@ var is_dashing: bool = false
 var dash_timer: float = 0.0
 var dash_dir: Vector2 = Vector2.RIGHT
 
+var is_placing: bool = false
+var is_scrubbing_mop: bool = false
 var is_attacking: bool = false
 var attack_timer: float = 0.0
 var hammer_hit_pending: bool = false
@@ -86,6 +88,8 @@ var attack_tween: Tween = null
 func _ready() -> void:
 	facing_direction = Vector2.LEFT if player_id == "p2" else Vector2.RIGHT
 	load_character_textures()
+	if get_tree().get_first_node_in_group("coop_session"):
+		load_coop_animations()
 	update_sprite_pose("idle")
 	if stun_stars:
 		stun_stars.visible = false
@@ -118,6 +122,20 @@ func load_character_textures() -> void:
 				if sheet and sheet.get_width() == frame_count * 128 and sheet.get_height() == 160:
 					character_animations[key] = sheet
 
+# Co-op sheets are separate from the original Party Battle resources.
+func load_coop_animations() -> void:
+	var actions: Array[String] = ["carry_idle", "place_item"]
+	var directions: Array[String] = ["down", "right", "up"]
+	for action in actions:
+		for direction in directions:
+			var key: String = action + "_" + direction
+			var path: String = "res://assets/coop/animations/" + character_type + "/" + key + ".png"
+			if ResourceLoader.exists(path):
+				var sheet := load(path) as Texture2D
+				var frames: int = 4 if action == "carry_idle" else 6
+				if sheet and sheet.get_width() == frames * 128 and sheet.get_height() == 160:
+					character_animations[key] = sheet
+
 func update_character_animation(action: String, delta: float) -> bool:
 	if not sprite:
 		return false
@@ -126,7 +144,7 @@ func update_character_animation(action: String, delta: float) -> bool:
 	var key := action + "_" + facing
 	# Reuse the first frame of the six-frame throw atlas as a two-handed
 	# stationary hold: the legacy carry.png already contains an object.
-	var texture_key := ("throw_" + facing) if action == "carry_idle" else key
+	var texture_key := ("throw_" + facing) if action == "carry_idle" and not character_animations.has(key) else key
 	if not character_animations.has(texture_key):
 		return false
 	if character_animation_key != key:
@@ -135,7 +153,7 @@ func update_character_animation(action: String, delta: float) -> bool:
 		sprite.hframes = 1
 		sprite.frame = 0
 		sprite.texture = character_animations[texture_key]
-		sprite.hframes = 4 if action == "hammer_idle" else 6
+		sprite.hframes = 4 if action == "hammer_idle" or (action == "carry_idle" and texture_key == key) else 6
 		sprite.position = Vector2(0, -70)
 		sprite.scale = Vector2.ONE
 		sprite.rotation = 0.0
@@ -151,7 +169,9 @@ func update_character_animation(action: String, delta: float) -> bool:
 	sprite.scale = Vector2.ONE * visual_scale
 	sprite.position.y = (-60.0 if action == "hammer_attack" else -70.0) * visual_scale
 	if action == "carry_idle":
-		sprite.frame = 0
+		sprite.frame = int(character_animation_time * 4.0) % 4 if texture_key == key else 0
+	elif action == "place_item":
+		sprite.frame = mini(int(character_animation_time / 0.36 * 6.0), 5)
 	elif action == "throw":
 		sprite.frame = mini(int(character_animation_time / THROW_DURATION * 6.0), 5)
 	elif action == "hammer_attack":
@@ -181,7 +201,7 @@ func update_weapon_transform() -> void:
 			elif facing == "up":
 				hand_position = Vector2(0, -52)
 				carry_pivot.z_index = -1
-			if character_animation_key.begins_with("throw_"):
+			if character_animation_key.begins_with("throw_") or character_animation_key.begins_with("place_item_"):
 				if facing == "down":
 					var x_offsets = [0.0, 0.0, 20.0, -24.0, -26.0, 0.0]
 					hand_position.x = x_offsets[sprite.frame]
@@ -210,12 +230,27 @@ func update_weapon_transform() -> void:
 				"coop_pillow_1", "coop_pillow_2", "pillow": item_scale = 0.62
 				"coop_mop": item_scale = 1.0
 			held_item_sprite.scale = Vector2.ONE * item_scale
-			held_item_sprite.position = Vector2(0, -3) if held_item_type != "coop_mop" else Vector2(6, 2)
-			held_item_sprite.rotation_degrees = -12.0 if held_item_type == "coop_mop" else 0.0
+			if not is_scrubbing_mop:
+				held_item_sprite.position = Vector2(0, -3) if held_item_type != "coop_mop" else Vector2(6, 2)
+				held_item_sprite.rotation_degrees = -12.0 if held_item_type == "coop_mop" else 0.0
 		else:
 			if held_item_sprite:
 				held_item_sprite.position = Vector2.ZERO
 				held_item_sprite.rotation = 0.0
+
+func begin_place_animation() -> void:
+	is_placing = true
+	velocity = Vector2.ZERO
+	if not update_character_animation("place_item", 0.0):
+		update_character_animation("carry_idle", 0.0)
+
+func end_place_animation() -> void:
+	is_placing = false
+	if not is_stunned and not is_slipping and knockback_state == KnockbackState.NONE:
+		if not held_item_type.is_empty() and held_item_type != "hammer":
+			update_character_animation("carry_idle", 0.0)
+		else:
+			update_sprite_pose("idle")
 
 func _physics_process(delta: float) -> void:
 	# 1. Regenerate stamina
@@ -247,6 +282,13 @@ func _physics_process(delta: float) -> void:
 			if stun_stars:
 				stun_stars.visible = false
 			update_sprite_pose("idle")
+		return
+
+	if is_placing:
+		if character_animation_key.begins_with("place_item_"):
+			update_character_animation("place_item", delta)
+		velocity = Vector2.ZERO
+		move_and_slide()
 		return
 
 	# 4. Handle Slipping state (Banana peel)
@@ -501,7 +543,7 @@ func read_input() -> void:
 		trigger_grab()
 
 func trigger_dash() -> void:
-	if is_dashing or is_stunned or is_slipping or is_attacking or knockback_state != KnockbackState.NONE:
+	if is_placing or is_dashing or is_stunned or is_slipping or is_attacking or knockback_state != KnockbackState.NONE:
 		return
 	if stamina < DASH_COST:
 		return
@@ -517,7 +559,7 @@ func trigger_dash() -> void:
 	spawn_vfx_in_world("dash_smoke", global_position + Vector2(0, -10))
 
 func trigger_attack() -> void:
-	if is_stunned or is_slipping or is_attacking or is_dashing or knockback_state != KnockbackState.NONE:
+	if is_placing or is_stunned or is_slipping or is_attacking or is_dashing or knockback_state != KnockbackState.NONE:
 		return
 	var session := get_tree().get_first_node_in_group("coop_session")
 	if session and session.has_method("try_use") and session.try_use(self):
@@ -589,8 +631,51 @@ func animate_pillow_swing() -> void:
 	attack_tween.tween_property(carry_pivot, "rotation_degrees", 55.0, 0.10)
 	attack_tween.tween_property(carry_pivot, "rotation_degrees", 0.0, 0.12)
 
+func play_mop_scrub_animation(target_pos: Vector2) -> void:
+	if target_pos != Vector2.ZERO and target_pos != global_position:
+		facing_direction = (target_pos - global_position).normalized()
+	var dir := facing_direction
+	var facing := "right" if absf(dir.x) > absf(dir.y) else ("up" if dir.y < 0.0 else "down")
+	sprite.flip_h = facing == "right" and dir.x < 0.0
+	
+	is_scrubbing_mop = true
+	update_sprite_pose("swing" if character_type == "boy" else "slam")
+	
+	if attack_tween and attack_tween.is_valid():
+		attack_tween.kill()
+	attack_tween = create_tween()
+	
+	var start_rot: float = -12.0
+	var start_pos: Vector2 = Vector2(6, 2)
+	var scrub_reach: Vector2 = (target_pos - global_position).limit_length(24.0) if target_pos != Vector2.ZERO else dir * 20.0
+	
+	# Sweep 1: forward and down to the floor
+	attack_tween.tween_property(held_item_sprite, "rotation_degrees", start_rot - 35.0, 0.07)\
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	attack_tween.parallel().tween_property(held_item_sprite, "position", start_pos + scrub_reach, 0.07)
+	attack_tween.parallel().tween_property(sprite, "scale", Vector2(1.06, 0.94), 0.07)
+	
+	# Sweep 2: reverse sweep across stain
+	attack_tween.tween_property(held_item_sprite, "rotation_degrees", start_rot + 35.0, 0.09)\
+		.set_trans(Tween.TRANS_SINE)
+	attack_tween.parallel().tween_property(sprite, "scale", Vector2(0.96, 1.04), 0.09)
+	
+	# Sweep 3: settle back
+	attack_tween.tween_property(held_item_sprite, "rotation_degrees", start_rot - 15.0, 0.06)
+	attack_tween.tween_property(held_item_sprite, "rotation_degrees", start_rot, 0.06)
+	attack_tween.parallel().tween_property(held_item_sprite, "position", start_pos, 0.06)
+	attack_tween.parallel().tween_property(sprite, "scale", Vector2.ONE, 0.06)
+	
+	attack_tween.tween_callback(func():
+		is_scrubbing_mop = false
+		if not held_item_type.is_empty():
+			update_character_animation("carry_idle", 0.0)
+		else:
+			update_sprite_pose("idle")
+	)
+
 func trigger_grab() -> void:
-	if is_stunned or is_slipping or is_attacking or is_throwing or knockback_state != KnockbackState.NONE:
+	if is_placing or is_stunned or is_slipping or is_attacking or is_throwing or knockback_state != KnockbackState.NONE:
 		return
 	var session := get_tree().get_first_node_in_group("coop_session")
 	if session and session.has_method("try_interact") and session.try_interact(self):
@@ -739,6 +824,8 @@ func take_knockback_hit(damage: int, stun: bool, hit_dir: Vector2, force: float 
 		hearts = max(0, hearts - damage)
 		hearts_changed.emit(player_id, hearts)
 
+	is_placing = false
+	is_scrubbing_mop = false
 	# Cancel an interrupted attack so a delayed hit cannot fire later.
 	is_attacking = false
 	attack_timer = 0.0
@@ -784,6 +871,8 @@ func trigger_slip(dir: Vector2) -> void:
 	is_throwing = false
 	throw_timer = 0.0
 	throw_released = true
+	is_placing = false
+	is_scrubbing_mop = false
 	is_attacking = false
 	attack_timer = 0.0
 	hammer_hit_pending = false

@@ -5,7 +5,7 @@ from scipy import ndimage as nd
 base=Path('asset/archive/animation_sources'); out=Path('assets/pets/cat/animations')
 sets=[('image.png','walk',6,3),('image copy.png','run',8,3),('image copy 2.png','panic',8,3),('image copy 5.png','idle',4,3),('image copy 7.png','reaction',4,3)]
 for name,action,cols,rows in sets:
- source = Path('asset/inbox') / name if name == 'image copy 5.png' else base / name
+ source = (Path('asset/archive/inbox_archive') / name if (Path('asset/archive/inbox_archive') / name).exists() else Path('asset/inbox') / name) if name == 'image copy 5.png' else base / name
  im=Image.open(source).convert('RGBA'); arr=np.array(im); mask=arr[:,:,3]>80
  lab,n=nd.label(nd.binary_dilation(mask,iterations=3)); items=[]
  for i,s in enumerate(nd.find_objects(lab),1):

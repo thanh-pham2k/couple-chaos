@@ -13,7 +13,7 @@ import numpy as np
 import scipy.ndimage as ndi
 from PIL import Image
 
-INBOX = "asset/inbox"
+INBOX = "asset/archive/inbox_archive" if os.path.exists("asset/archive/inbox_archive") else "asset/inbox"
 ASSETS_OUT = "assets"
 
 def make_transparent_crop(source_img, crop_box, white_thresh=242):

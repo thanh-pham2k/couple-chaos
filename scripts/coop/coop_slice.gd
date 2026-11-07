@@ -25,6 +25,10 @@ var start_button: Button
 var menu_button: Button
 var chaos_timer := 35.0
 var chaos_count := 0
+const PLACE_DURATION := 0.36
+const PLACE_RELEASE_TIME := PLACE_DURATION * 3.0 / 6.0
+# At most one in-flight placement per player; each destination is reserved.
+var pending_placements: Dictionary = {}
 
 func _enter_tree() -> void:
 	add_to_group("coop_session")
@@ -45,6 +49,7 @@ func _ready() -> void:
 	restart_round()
 
 func restart_round() -> void:
+	_cancel_all_placements()
 	if is_instance_valid(arena):
 		remove_child(arena)
 		arena.queue_free()
@@ -89,6 +94,7 @@ func _on_completed() -> void:
 	session.finish(true)
 
 func _on_ended(won: bool) -> void:
+	_cancel_all_placements()
 	_set_players_enabled(false)
 	overlay_title.text = "Dọn xong rồi! 🎉" if won else "Khách đến rồi! ⏰"
 	overlay_details.text = "Phần thưởng: 3 sao • Cả hai đã hợp sức dọn phòng!" if won else "Chưa xong lần này. Cùng thử lại nhé!"
@@ -116,11 +122,15 @@ func resolve_item_texture(item_type: String) -> String:
 		"coop_remote": return "res://assets/coop/remote.png"
 		"coop_trash": return "res://assets/items/box.png"
 		"coop_gamepad": return "res://assets/items/gamepad.png"
-		"coop_pillow_1", "coop_pillow_2": return "res://assets/coop/sofa_pillow.png"
+		"coop_pillow_1": return "res://assets/coop/advanced/sofa_pillow_1.png"
+		"coop_pillow_2": return "res://assets/coop/advanced/sofa_pillow_2.png"
 	return ""
 
 func _on_player_item_changed(_player_id: String, _item: String) -> void:
 	_update_held_hint()
+	for zone in zones:
+		if is_instance_valid(zone):
+			zone.refresh()
 
 func _update_held_hint() -> void:
 	if not is_instance_valid(arena) or not held_hint: return
@@ -139,19 +149,106 @@ func _update_held_hint() -> void:
 
 func try_interact(player: Player) -> bool:
 	if not session.running: return true
+	if pending_placements.has(player): return true
 	if player.held_item_type.is_empty(): return false
+	
+	if player.held_item_type == "coop_mop":
+		for zone in zones:
+			if zone.target_id == "mop_station" and zone.global_position.distance_to(player.global_position) <= zone.INTERACTION_RADIUS:
+				if quest.get_count("clean") < 2:
+					hint.text = "Còn vết bẩn chưa lau xong! Hãy lau sạch sàn trước khi cất cây lau."
+					return true
+				_begin_placement(player, zone)
+				return true
+
 	for zone in zones:
 		if zone.global_position.distance_to(player.global_position) <= zone.INTERACTION_RADIUS and zone.can_accept(player.held_item_type):
-			if quest.completed[zone.category].has(player.held_item_type):
+			if zone.target_id != "mop_station" and quest.completed[zone.category].has(player.held_item_type):
 				hint.text = "Món này đã được cất rồi!"
 				return true
-			zone.accept(player)
+			_begin_placement(player, zone)
 			return true
 	for zone in zones:
 		if (not zone.completed or zone.target_id == "basket") and zone.global_position.distance_to(player.global_position) <= zone.INTERACTION_RADIUS:
-			hint.text = "Giỏ nhận TAY CẦM; remote đặt tại TV." if zone.target_id == "basket" else "Món này chưa đúng chỗ nhé!"
+			if zone.target_id == "mop_station" and player.held_item_type != "coop_mop":
+				hint.text = "Đây là chỗ để cây lau sàn!"
+			elif zone.target_id == "basket":
+				hint.text = "Giỏ nhận TAY CẦM; remote đặt tại TV."
+			else:
+				hint.text = "Món này chưa đúng chỗ nhé!"
 			return true
 	return false # Away from a zone, the existing grab action throws the item.
+
+func _begin_placement(player: Player, zone: CoopDropZone) -> void:
+	if pending_placements.has(player) or not zone.reserve(player):
+		return
+	pending_placements[player] = {"zone": zone, "item": player.held_item_type, "elapsed": 0.0, "released": false}
+	player.begin_place_animation()
+	if zone.target_id == "trash":
+		zone.open_trash_lid(PLACE_RELEASE_TIME)
+
+func _cancel_placement(player: Player) -> void:
+	if not pending_placements.has(player):
+		return
+	var zone: CoopDropZone = pending_placements[player]["zone"]
+	pending_placements.erase(player)
+	if is_instance_valid(zone):
+		zone.release_reservation(player)
+		if zone.target_id == "trash":
+			zone.reset_trash_lid()
+	if is_instance_valid(player):
+		player.end_place_animation()
+
+func _cancel_all_placements() -> void:
+	for player in pending_placements.keys():
+		_cancel_placement(player)
+
+func _physics_process(delta: float) -> void:
+	for player in pending_placements.keys():
+		if not is_instance_valid(player):
+			pending_placements.erase(player)
+			continue
+		var pending: Dictionary = pending_placements[player]
+		var zone: CoopDropZone = pending["zone"]
+		var interrupted: bool = not session.running or not is_instance_valid(zone) or not player.is_placing or player.is_stunned or player.is_slipping or player.knockback_state != Player.KnockbackState.NONE
+		if not pending["released"] and not interrupted:
+			interrupted = player.held_item_type != pending["item"] or player.global_position.distance_to(zone.global_position) > zone.INTERACTION_RADIUS
+		if interrupted:
+			_cancel_placement(player)
+			continue
+		pending["elapsed"] += delta
+		if zone.target_id == "trash":
+			zone.update_trash_lid_progress(pending["elapsed"], PLACE_RELEASE_TIME, PLACE_DURATION)
+		if not pending["released"] and pending["elapsed"] >= PLACE_RELEASE_TIME:
+			# The hand opens on frame 4; acceptance and progress happen exactly once.
+			var texture: Texture2D = player.held_item_sprite.texture
+			var origin: Vector2 = player.held_item_sprite.global_position
+			pending["released"] = true
+			if zone.accept_reserved(player):
+				_animate_placed_item(texture, origin, zone)
+			else:
+				_cancel_placement(player)
+				continue
+		if pending_placements.has(player) and pending["elapsed"] >= PLACE_DURATION:
+			pending_placements.erase(player)
+			player.end_place_animation()
+
+func _animate_placed_item(texture: Texture2D, origin: Vector2, zone: CoopDropZone) -> void:
+	if not texture or not is_instance_valid(arena):
+		return
+	var visual := Sprite2D.new()
+	visual.texture = texture
+	visual.scale = Vector2(0.55, 0.55)
+	visual.z_index = 4
+	arena.get_node("YSortArena").add_child(visual)
+	visual.global_position = origin
+	var tween := visual.create_tween()
+	var dest: Vector2 = zone.global_position + (Vector2(0, -45) if zone.target_id == "trash" else Vector2(0, -20))
+	tween.tween_property(visual, "global_position", dest, 0.16).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	if zone.target_id == "trash":
+		tween.parallel().tween_property(visual, "scale", Vector2(0.22, 0.22), 0.16)
+	tween.parallel().tween_property(visual, "modulate:a", 0.0, 0.16)
+	tween.tween_callback(visual.queue_free)
 
 func try_use(player: Player) -> bool:
 	if not session.running: return true
@@ -159,13 +256,19 @@ func try_use(player: Player) -> bool:
 	for spot in spots:
 		if spot.state != "clean" and spot.global_position.distance_to(player.global_position) <= 120.0:
 			spot.scrub(player)
-			hint.text = "Lau sạch rồi!" if spot.state == "clean" else "Lau tiếp nào: %d/3" % spot.progress
+			if spot.state == "clean":
+				hint.text = "Vết bẩn đã sạch bong! ✨"
+			else:
+				hint.text = "Đang lau sạch: %d/3 💦" % spot.progress
 			return true
-	hint.text = "Mang cây lau tới gần vết bẩn rồi nhấn F / K."
+	player.play_mop_scrub_animation(player.global_position + player.facing_direction * 40.0)
+	hint.text = "Mang cây lau tới gần vết bẩn rồi nhấn F / K để lau sàn."
 	return true
 
 func _on_deposited(category: String, id: String, _player: Player) -> void:
-	if quest.complete_target(category, id):
+	if id == "coop_mop":
+		hint.text = "Đã cất cây lau sàn gọn gàng về chỗ cũ! ✨"
+	elif quest.complete_target(category, id):
 		hint.text = "Đúng chỗ rồi! ✨"
 
 func _on_stored_extra(_id: String, _player: Player) -> void:
@@ -173,6 +276,8 @@ func _on_stored_extra(_id: String, _player: Player) -> void:
 
 func _on_cleaned(id: String, _player: Player) -> void:
 	quest.complete_target("clean", id)
+	if quest.get_count("clean") >= 2:
+		hint.text = "Sàn đã sạch bóng! Hãy mang cây lau về cất ở góc phòng nhé! 🧹✨"
 
 func _setup_world() -> void:
 	var world: Node2D = arena.get_node("YSortArena")
@@ -205,10 +310,17 @@ func _setup_world() -> void:
 		spot.cleaned.connect(_on_cleaned)
 		spots.append(spot)
 	_add_zone(world, "remote", ["coop_remote"], "store", Vector2(620, 345), "")
-	_add_zone(world, "trash", ["coop_trash"], "store", Vector2(1510, 415), "res://assets/coop/trash_bin.png")
+	_add_zone(world, "trash", ["coop_trash"], "store", Vector2(1510, 415), "res://assets/coop/advanced/trash_bin_anim.png")
 	_add_zone(world, "basket", ["coop_gamepad", "gamepad", "pillow", "wallet", "box"], "store", Vector2(380, 455), "res://assets/coop/basket.png")
-	_add_zone(world, "pillow_1", ["coop_pillow_1", "coop_pillow_2"], "pillow", Vector2(550, 415), "")
-	_add_zone(world, "pillow_2", ["coop_pillow_1", "coop_pillow_2"], "pillow", Vector2(690, 415), "")
+	_add_zone(world, "pillow_1", ["coop_pillow_1", "coop_pillow_2"], "pillow", Vector2(565, 435), "")
+	_add_zone(world, "pillow_2", ["coop_pillow_1", "coop_pillow_2"], "pillow", Vector2(675, 435), "")
+	_add_zone(world, "mop_station", ["coop_mop"], "clean", Vector2(430, 720), "")
+	
+	for player in [arena.p1, arena.p2]:
+		var guidance := CoopItemGuidance.new()
+		guidance.name = "ItemGuidance_" + player.player_id
+		world.add_child(guidance)
+		guidance.setup(player, self)
 
 func _add_zone(world: Node2D, id: String, accepted: Array, category: String, pos: Vector2, prop: String) -> void:
 	var zone := ZONE_SCRIPT.new() as CoopDropZone
