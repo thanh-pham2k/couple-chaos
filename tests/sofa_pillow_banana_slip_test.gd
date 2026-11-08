@@ -181,8 +181,8 @@ func test_sofa_pillow_placement_and_sync() -> void:
 	var slot_r := sofa.get_node("PillowSlotRight") as Marker2D
 	
 	assert(slot_l != null and slot_r != null, "Both pillow slots must exist")
-	assert(slot_l.position == Vector2(-58, -95), "Slot left anchored on seat cushion at (-58, -95)")
-	assert(slot_r.position == Vector2(58, -95), "Slot right anchored on seat cushion at (58, -95)")
+	assert(slot_l.position == Vector2(-59, -74), "Slot left anchored on seat cushion at (-59, -74)")
+	assert(slot_r.position == Vector2(62, -74), "Slot right anchored on seat cushion at (62, -74)")
 	
 	var p1_zone: CoopDropZone = null
 	var p2_zone: CoopDropZone = null

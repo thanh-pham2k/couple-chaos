@@ -33,6 +33,8 @@ func _ready() -> void:
 	for entry in [["pillow_1", "PillowSlotLeft"], ["pillow_2", "PillowSlotRight"]]:
 		var pillow = container.get_node("Modular_" + entry[0])
 		var slot = sofa.get_node(entry[1])
+		var expected_texture = "sofa_pillow_yellow_v4.png" if entry[0] == "pillow_1" else "sofa_pillow_pink_v4.png"
+		assert(pillow.texture.resource_path.ends_with(expected_texture))
 		assert(not pillow.visible and pillow.global_position.is_equal_approx(slot.global_position))
 		assert(is_equal_approx(pillow.global_rotation, slot.global_rotation))
 	await get_tree().create_timer(0.25).timeout

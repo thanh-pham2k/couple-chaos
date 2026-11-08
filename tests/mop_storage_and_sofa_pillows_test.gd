@@ -50,7 +50,7 @@ func _ready() -> void:
 	if sofa_base == null:
 		sofa_base = game.arena.get_node_or_null("YSortArena/SofaBack") as Sprite2D
 	assert(sofa_base != null, "Sofa Base must exist for natural seat cushion rendering")
-	assert(sofa_base.texture.resource_path.ends_with("sofa_base.png") or sofa_base.texture.resource_path.ends_with("sofa_back_cushion.png"), "Sofa base texture must be valid")
+	assert(sofa_base.texture.resource_path.ends_with("sofa_base_v4.png") or sofa_base.texture.resource_path.ends_with("sofa_back_cushion.png"), "Sofa base texture must be valid")
 	
 	var sofa_fg: Sprite2D = sofa.get_node_or_null("Foreground") as Sprite2D
 	if sofa_fg == null:
@@ -60,12 +60,12 @@ func _ready() -> void:
 	var slot_l := sofa.get_node("PillowSlotLeft") as Marker2D
 	var slot_r := sofa.get_node("PillowSlotRight") as Marker2D
 	assert(slot_l != null and slot_r != null, "Sofa must have PillowSlotLeft and PillowSlotRight anchor markers")
-	assert(slot_l.position == Vector2(-58, -95), "PillowSlotLeft must be anchored on seat cushion at (-58, -95)")
-	assert(slot_r.position == Vector2(58, -95), "PillowSlotRight must be anchored on seat cushion at (58, -95)")
+	assert(slot_l.position == Vector2(-59, -74), "PillowSlotLeft must be anchored on seat cushion at (-59, -74)")
+	assert(slot_r.position == Vector2(62, -74), "PillowSlotRight must be anchored on seat cushion at (62, -74)")
 	assert(pillow_1_zone.position == sofa.to_global(slot_l.position), "Pillow 1 zone must align with PillowSlotLeft")
 	assert(pillow_2_zone.position == sofa.to_global(slot_r.position), "Pillow 2 zone must align with PillowSlotRight")
-	assert(pillow_1_zone.position.y == 435.0, "Pillow 1 must sit on seat cushion at y=435, not on back panel or floor")
-	assert(pillow_2_zone.position.y == 435.0, "Pillow 2 must sit on seat cushion at y=435, not on back panel or floor")
+	assert(pillow_1_zone.position.y == 456.0, "Pillow 1 must sit on seat cushion at y=456, not on back panel or floor")
+	assert(pillow_2_zone.position.y == 456.0, "Pillow 2 must sit on seat cushion at y=456, not on back panel or floor")
 
 	# 5. TEST BOY (P1) PICKUP, CARRY & PLACE PILLOW 1
 	p1.pick_up("coop_pillow_1")

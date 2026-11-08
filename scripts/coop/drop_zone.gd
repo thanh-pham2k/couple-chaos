@@ -239,7 +239,7 @@ func accept(player: Player) -> bool:
 		var container := sofa.get_node_or_null("PlacedPillows") as Node2D if sofa else null
 		var slot := sofa.get_node_or_null("PillowSlotLeft" if target_id == "pillow_1" else "PillowSlotRight") as Marker2D if sofa else null
 		var pillow := Sprite2D.new()
-		pillow.texture = load("res://assets/coop/advanced/sofa_pillow_1.png" if target_id == "pillow_1" else "res://assets/coop/advanced/sofa_pillow_2.png")
+		pillow.texture = load("res://assets/furniture/modular/sofa/sofa_pillow_yellow_v4.png" if target_id == "pillow_1" else "res://assets/furniture/modular/sofa/sofa_pillow_pink_v4.png")
 		pillow.scale = Vector2(0.9, 0.9)
 		if container:
 			pillow.name = "Modular_" + target_id

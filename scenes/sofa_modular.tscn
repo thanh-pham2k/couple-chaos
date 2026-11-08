@@ -1,7 +1,7 @@
 [gd_scene load_steps=5 format=3]
 
-[ext_resource type="Texture2D" path="res://assets/furniture/modular/sofa/sofa_base.png" id="1_base"]
-[ext_resource type="Texture2D" path="res://assets/furniture/modular/sofa/sofa_foreground.png" id="2_fg"]
+[ext_resource type="Texture2D" path="res://assets/furniture/modular/sofa/sofa_base_v4.png" id="1_base"]
+[ext_resource type="Texture2D" path="res://assets/furniture/modular/sofa/sofa_foreground_reference_v4.png" id="2_fg"]
 
 [sub_resource type="RectangleShape2D" id="Shape_Sofa"]
 size = Vector2(230, 45)
@@ -15,12 +15,10 @@ position = Vector2(0, -80)
 texture = ExtResource("1_base")
 
 [node name="PillowSlotLeft" type="Marker2D" parent="."]
-position = Vector2(-58, -95)
-rotation = -0.0872665
+position = Vector2(-59, -74)
 
 [node name="PillowSlotRight" type="Marker2D" parent="."]
-position = Vector2(58, -95)
-rotation = 0.0872665
+position = Vector2(62, -74)
 
 [node name="PlacedPillows" type="Node2D" parent="."]
 

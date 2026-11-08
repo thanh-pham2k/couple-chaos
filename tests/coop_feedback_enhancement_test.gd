@@ -42,7 +42,7 @@ func _ready() -> void:
 	assert(pillow_1_zone.completed, "Pillow 1 zone must be completed")
 	assert(not pillow_1_zone.marker.visible, "Marker must be hidden after placement")
 	var placed_pillow_1 = sofa.get_node_or_null("PlacedPillows/Modular_pillow_1")
-	assert(placed_pillow_1 != null and placed_pillow_1.texture.resource_path.ends_with("sofa_pillow_1.png"), "Placed pillow 1 must use sofa_pillow_1.png")
+	assert(placed_pillow_1 != null and placed_pillow_1.texture.resource_path.ends_with("sofa_pillow_yellow_v4.png"), "Placed pillow 1 must use sofa_pillow_yellow_v4.png")
 	game._physics_process(game.PLACE_DURATION)
 	
 	# 2. Test Mop Station Inactive before cleaning
