@@ -10,7 +10,7 @@ func _ready() -> void:
 	await get_tree().process_frame
 	cat.set_physics_process(false)
 
-	for action in ["walk", "run", "panic", "idle"]:
+	for action in ["walk", "run", "panic", "idle", "carrywalk", "carryrun"]:
 		for direction in ["down", "right", "up"]:
 			var key: String = action + "_" + direction
 			assert(cat.animation_sheets.has(key), "Missing valid sheet: " + key)
@@ -39,6 +39,29 @@ func _ready() -> void:
 	assert(cat.sprite.frame == 0, "Changing state should reset the frame")
 	cat.update_animation(0.15, Vector2.UP)
 	assert(cat.sprite.frame > 0, "Panic animation must advance")
+
+	# Remote animations are opt-in and retain the ordinary AI states and directions.
+	assert(not cat.carrying_remote)
+	cat.set_remote_visual(true)
+	cat.current_state = BossCat.State.WANDER
+	for entry in [[Vector2.DOWN, "carrywalk_down"], [Vector2.RIGHT, "carrywalk_right"], [Vector2.UP, "carrywalk_up"]]:
+		cat.update_animation(0.0, entry[0])
+		assert(cat.animation_key == entry[1] and cat.sprite.hframes == 6)
+	cat.update_animation(0.0, Vector2.LEFT)
+	assert(cat.animation_key == "carrywalk_right" and cat.sprite.flip_h)
+	var saved_sheet: Texture2D = cat.animation_sheets["carrywalk_down"]
+	cat.animation_sheets.erase("carrywalk_down")
+	cat.update_animation(0.0, Vector2.DOWN)
+	assert(cat.animation_key == "walk_down", "Missing carry atlas must fall back to regular walk")
+	cat.animation_sheets["carrywalk_down"] = saved_sheet
+	cat.current_state = BossCat.State.RUN
+	cat.update_animation(0.0, Vector2.RIGHT)
+	assert(cat.animation_key == "carryrun_right" and cat.sprite.hframes == 6)
+	cat.update_animation(0.1, Vector2.RIGHT)
+	assert(cat.sprite.frame == 1)
+	cat.set_remote_visual(false)
+	cat.update_animation(0.0, Vector2.RIGHT)
+	assert(cat.animation_key == "panic_right" and cat.sprite.hframes == 8)
 
 	cat.current_state = BossCat.State.SLEEP
 	cat.update_animation(0.0)

@@ -23,6 +23,11 @@ func notify_visitor_approaching(duration: float = 2.0) -> void:
 	visitor_timer.start(maxf(duration, 0.01))
 	visitor_approaching.emit()
 
+# Visual hook only: the future Stage 2 gameplay owns the remote item.
+func set_cat_remote_visual(enabled: bool) -> void:
+	var cat := $Arena/YSortArena/BossCat as BossCat
+	cat.set_remote_visual(enabled)
+
 func request_cat_return() -> void:
 	cat_bed.request_cat_return()
 

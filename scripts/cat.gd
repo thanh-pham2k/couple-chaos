@@ -20,8 +20,10 @@ var textures: Dictionary = {}
 var animation_sheets: Dictionary = {}
 var animation_key: String = ""
 var animation_clock: float = 0.0
-const FRAME_COUNTS := {"walk": 6, "run": 8, "panic": 8, "idle": 4, "sleep": 4, "startled": 4, "hiss": 4}
-const FRAME_RATES := {"walk": 8.0, "run": 12.0, "panic": 14.0, "idle": 4.0, "sleep": 4.0, "startled": 12.0, "hiss": 6.0}
+# Visual-only flag: a future gameplay system owns the actual remote item.
+var carrying_remote: bool = false
+const FRAME_COUNTS := {"walk": 6, "run": 8, "panic": 8, "idle": 4, "carrywalk": 6, "carryrun": 6, "sleep": 4, "startled": 4, "hiss": 4}
+const FRAME_RATES := {"walk": 8.0, "run": 12.0, "panic": 14.0, "idle": 4.0, "carrywalk": 8.0, "carryrun": 12.0, "sleep": 4.0, "startled": 12.0, "hiss": 6.0}
 
 
 func _ready() -> void:
@@ -37,7 +39,7 @@ func load_textures() -> void:
 		var p = path_base + s + ".png"
 		if ResourceLoader.exists(p):
 			textures[s] = load(p)
-	for action in ["walk", "run", "panic", "idle"]:
+	for action in ["walk", "run", "panic", "idle", "carrywalk", "carryrun"]:
 		for direction in ["down", "right", "up"]:
 			var key = action + "_" + direction
 			var sheet_path = path_base + "animations/" + key + ".png"
@@ -52,6 +54,13 @@ func load_textures() -> void:
 			if sheet and sheet.get_width() == 256 and sheet.get_height() == 64:
 				animation_sheets[action] = sheet
 
+func set_remote_visual(enabled: bool) -> void:
+	if carrying_remote == enabled:
+		return
+	carrying_remote = enabled
+	# Refresh on the next animation update without changing cat AI or state.
+	animation_key = ""
+
 func update_animation(delta: float, direction: Vector2 = Vector2.ZERO) -> void:
 	if not sprite:
 		return
@@ -62,14 +71,21 @@ func update_animation(delta: float, direction: Vector2 = Vector2.ZERO) -> void:
 		State.STARTLED: action = "startled"
 		State.RUN: action = "panic"
 		State.HISS: action = "hiss"
+	if carrying_remote and action == "walk":
+		action = "carrywalk"
+	elif carrying_remote and action == "panic":
+		action = "carryrun"
 	var key := action
-	if action == "walk" or action == "panic":
+	if action in ["walk", "panic", "carrywalk", "carryrun"]:
 		if direction == Vector2.ZERO:
 			direction = move_dir
 		var facing := "right" if absf(direction.x) > absf(direction.y) else ("up" if direction.y < 0.0 else "down")
 		key += "_" + facing
-		if action == "panic" and not animation_sheets.has(key):
-			key = "run_" + facing
+		if not animation_sheets.has(key):
+			if action == "panic" or action == "carryrun":
+				key = "panic_" + facing if animation_sheets.has("panic_" + facing) else "run_" + facing
+			elif action == "carrywalk":
+				key = "walk_" + facing
 		if facing == "right":
 			sprite.flip_h = direction.x < 0.0
 		else:

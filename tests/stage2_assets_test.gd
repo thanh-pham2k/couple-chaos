@@ -26,6 +26,13 @@ func _ready() -> void:
 	assert(not bell is PhysicsBody2D, "Doorbell must not add player collision")
 	assert(not ring_icon.visible and not visitor_icon.visible, "Event icons must be hidden initially")
 
+	var cat: BossCat = room.get_node("Arena/YSortArena/BossCat")
+	assert(not cat.carrying_remote)
+	room.set_cat_remote_visual(true)
+	assert(cat.carrying_remote)
+	room.set_cat_remote_visual(false)
+	assert(not cat.carrying_remote)
+
 	assert(room.has_signal("cat_return_requested"))
 	room.cat_return_requested.connect(_on_cat_return_requested)
 	room.request_cat_return()
