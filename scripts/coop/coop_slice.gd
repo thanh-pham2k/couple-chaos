@@ -298,6 +298,15 @@ func _animate_placed_item(texture: Texture2D, origin: Vector2, zone: CoopDropZon
 	arena.get_node("YSortArena").add_child(visual)
 	visual.global_position = origin
 	var tween := visual.create_tween()
+	var final_pillow: Sprite2D = null
+	if zone.category == "pillow":
+		var sofa := arena.get_node_or_null("YSortArena/Sofa")
+		if sofa:
+			final_pillow = sofa.get_node_or_null("PlacedPillows/Modular_" + zone.target_id) as Sprite2D
+		if not final_pillow:
+			final_pillow = zone.get_node_or_null("PlacedPillow") as Sprite2D
+		if final_pillow:
+			final_pillow.visible = false
 	var dest: Vector2 = zone.global_position
 	if zone.target_id == "trash":
 		dest += Vector2(0, -45)
@@ -309,7 +318,11 @@ func _animate_placed_item(texture: Texture2D, origin: Vector2, zone: CoopDropZon
 	if zone.target_id == "trash":
 		tween.parallel().tween_property(visual, "scale", Vector2(0.22, 0.22), 0.16)
 	tween.parallel().tween_property(visual, "modulate:a", 0.0, 0.16)
-	tween.tween_callback(visual.queue_free)
+	tween.tween_callback(func() -> void:
+		if is_instance_valid(final_pillow):
+			final_pillow.visible = true
+		visual.queue_free()
+	)
 
 func try_use(player: Player) -> bool:
 	if not session.running: return true
@@ -403,8 +416,8 @@ func _setup_world() -> void:
 		var slot_r := sofa.get_node_or_null("PillowSlotRight") as Marker2D
 		pillow_1_pos = slot_l.global_position if slot_l else sofa.to_global(Vector2(-58, -95))
 		pillow_2_pos = slot_r.global_position if slot_r else sofa.to_global(Vector2(58, -95))
-	_add_zone(world, "pillow_1", ["coop_pillow_1", "coop_pillow_2"], "pillow", pillow_1_pos, "")
-	_add_zone(world, "pillow_2", ["coop_pillow_1", "coop_pillow_2"], "pillow", pillow_2_pos, "")
+	_add_zone(world, "pillow_1", ["coop_pillow_1", "coop_pillow_2"], "pillow", world.to_local(pillow_1_pos), "")
+	_add_zone(world, "pillow_2", ["coop_pillow_1", "coop_pillow_2"], "pillow", world.to_local(pillow_2_pos), "")
 	_add_zone(world, "mop_station", ["coop_mop"], "clean", Vector2(1400, 270), "res://assets/coop/advanced/mop_rack.png")
 	
 	for player in [arena.p1, arena.p2]:

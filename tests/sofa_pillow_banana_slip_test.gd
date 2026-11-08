@@ -213,7 +213,7 @@ func test_sofa_pillow_placement_and_sync() -> void:
 	assert(not p1_zone.marker.visible, "Completed pillow marker must be hidden")
 	assert(not p1_zone.label.visible, "Completed pillow label must be hidden")
 	
-	var placed_p1 := p1_zone.get_node_or_null("PlacedPillow") as Sprite2D
+	var placed_p1 := sofa.get_node_or_null("PlacedPillows/Modular_pillow_1") as Sprite2D
 	assert(placed_p1 != null, "PlacedPillow sprite must exist")
 	assert(placed_p1.z_index == 0, "Placed pillow z_index must be 0 for natural Y-sort under sofa front")
 	assert(placed_p1.scale == Vector2(0.9, 0.9), "Placed pillow scale must be natural (0.90)")

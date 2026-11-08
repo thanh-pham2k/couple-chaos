@@ -78,7 +78,7 @@ func _ready() -> void:
 	assert(p1.held_item_type.is_empty(), "Pillow must release from P1 hand at release time")
 	assert(pillow_1_zone.completed, "Pillow 1 zone must be completed")
 	assert(not pillow_1_zone.marker.visible, "Placement marker must be hidden once completed")
-	var placed_p1 := pillow_1_zone.get_node_or_null("PlacedPillow") as Sprite2D
+	var placed_p1 := sofa.get_node_or_null("PlacedPillows/Modular_pillow_1") as Sprite2D
 	assert(placed_p1 != null, "PlacedPillow node must be added to slot")
 	assert(placed_p1.z_index == 0, "Placed pillow z_index must be 0 for natural Y-sort occlusion under sofa front")
 	assert(placed_p1.scale == Vector2(0.9, 0.9), "Placed pillow scale must be Vector2(0.9, 0.9)")
@@ -94,7 +94,7 @@ func _ready() -> void:
 	game._physics_process(game.PLACE_RELEASE_TIME + 0.05)
 	assert(p2.held_item_type.is_empty(), "P2 hand must be empty after release")
 	assert(pillow_2_zone.completed, "Pillow 2 zone must be completed")
-	var placed_p2 := pillow_2_zone.get_node_or_null("PlacedPillow") as Sprite2D
+	var placed_p2 := sofa.get_node_or_null("PlacedPillows/Modular_pillow_2") as Sprite2D
 	assert(placed_p2 != null and placed_p2.z_index == 0, "Pillow 2 must be placed with z_index 0")
 	assert(placed_p2.scale == Vector2(0.9, 0.9), "Pillow 2 scale must be Vector2(0.9, 0.9)")
 	game._physics_process(game.PLACE_DURATION)

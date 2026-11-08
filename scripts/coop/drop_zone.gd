@@ -235,41 +235,22 @@ func accept(player: Player) -> bool:
 		completed = true
 		
 	if category == "pillow":
+		var sofa := get_parent().get_node_or_null("Sofa") as Node2D
+		var container := sofa.get_node_or_null("PlacedPillows") as Node2D if sofa else null
+		var slot := sofa.get_node_or_null("PillowSlotLeft" if target_id == "pillow_1" else "PillowSlotRight") as Marker2D if sofa else null
 		var pillow := Sprite2D.new()
-		pillow.name = "PlacedPillow"
-		var pillow_texture_path := "res://assets/coop/advanced/sofa_pillow_1.png" if target_id == "pillow_1" else "res://assets/coop/advanced/sofa_pillow_2.png"
-		pillow.texture = load(pillow_texture_path)
+		pillow.texture = load("res://assets/coop/advanced/sofa_pillow_1.png" if target_id == "pillow_1" else "res://assets/coop/advanced/sofa_pillow_2.png")
 		pillow.scale = Vector2(0.9, 0.9)
-		pillow.position = Vector2(0, 0)
-		pillow.z_index = 0
-		add_child(pillow)
-		
-		# Modular rendering: mirror visual into Sofa/PlacedPillows between Base and Foreground
-		var sofa: Node2D = null
-		var parent_node := get_parent()
-		if is_instance_valid(parent_node):
-			sofa = parent_node.get_node_or_null("Sofa") as Node2D
-		if not is_instance_valid(sofa) and is_inside_tree():
-			var session := get_tree().get_first_node_in_group("coop_session")
-			if session and "arena" in session and session.arena:
-				sofa = session.arena.get_node_or_null("YSortArena/Sofa") as Node2D
-		if is_instance_valid(sofa):
-			var slot_node = sofa.get_node_or_null("PillowSlotLeft" if target_id == "pillow_1" else "PillowSlotRight")
-			if is_instance_valid(slot_node):
-				pillow.rotation = slot_node.rotation
-			var placed_container := sofa.get_node_or_null("PlacedPillows") as Node2D
-			if is_instance_valid(placed_container):
-				var modular_pillow := Sprite2D.new()
-				modular_pillow.name = "Modular_" + target_id
-				modular_pillow.texture = pillow.texture
-				modular_pillow.scale = pillow.scale
-				modular_pillow.position = sofa.to_local(global_position)
-				if is_instance_valid(slot_node):
-					modular_pillow.rotation = slot_node.rotation
-				placed_container.add_child(modular_pillow)
-				# Retain pillow.visible = true for test and marker compatibility
-				pillow.visible = true
-				
+		if container:
+			pillow.name = "Modular_" + target_id
+			container.add_child(pillow)
+			pillow.position = container.to_local(slot.global_position if slot else global_position)
+			if slot:
+				pillow.rotation = slot.global_rotation - container.global_rotation
+		else:
+			pillow.name = "PlacedPillow"
+			add_child(pillow)
+
 		CoopVisualFeedback.play_success_fx(get_parent(), global_position, "place_success_fx")
 	elif target_id == "remote":
 		var remote := Sprite2D.new()

@@ -78,8 +78,9 @@ func _ready() -> void:
 		game._physics_process(game.PLACE_DURATION + 0.05)
 		assert(zone.completed and player.held_item_type.is_empty())
 		if zone.category == "pillow":
-			var placed := zone.get_node_or_null("PlacedPillow") as Sprite2D
-			assert(placed != null and placed.visible and placed.texture != null, "Returned pillows must remain visible")
+			var placed := game.arena.get_node_or_null("YSortArena/Sofa/PlacedPillows/Modular_" + zone.target_id) as Sprite2D
+			assert(placed != null and placed.texture != null, "Returned pillow must exist in sofa")
+			assert(not zone.has_node("PlacedPillow"), "Drop zone must not render a duplicate")
 		assert(not game.quest.complete_target(zone.category, objective_id), "A duplicate must not increase progress")
 		n += 1
 	assert(game.quest.get_count("store") == 3)
