@@ -396,13 +396,13 @@ func _setup_world() -> void:
 	_add_zone(world, "trash", ["coop_trash", "box", "banana", "popcorn", "boba"], "store", Vector2(1510, 415), "res://assets/coop/advanced/trash_bin_anim.png")
 	_add_zone(world, "basket", ["coop_gamepad", "gamepad", "pillow", "wallet", "hammer"], "store", Vector2(380, 480), "res://assets/coop/basket.png")
 	var sofa := world.get_node_or_null("Sofa") as Node2D
-	var pillow_1_pos := Vector2(562, 446)
-	var pillow_2_pos := Vector2(678, 446)
+	var pillow_1_pos := Vector2(562, 435)
+	var pillow_2_pos := Vector2(678, 435)
 	if is_instance_valid(sofa):
 		var slot_l := sofa.get_node_or_null("PillowSlotLeft") as Marker2D
 		var slot_r := sofa.get_node_or_null("PillowSlotRight") as Marker2D
-		pillow_1_pos = slot_l.global_position if slot_l else sofa.to_global(Vector2(-58, -84))
-		pillow_2_pos = slot_r.global_position if slot_r else sofa.to_global(Vector2(58, -84))
+		pillow_1_pos = slot_l.global_position if slot_l else sofa.to_global(Vector2(-58, -95))
+		pillow_2_pos = slot_r.global_position if slot_r else sofa.to_global(Vector2(58, -95))
 	_add_zone(world, "pillow_1", ["coop_pillow_1", "coop_pillow_2"], "pillow", pillow_1_pos, "")
 	_add_zone(world, "pillow_2", ["coop_pillow_1", "coop_pillow_2"], "pillow", pillow_2_pos, "")
 	_add_zone(world, "mop_station", ["coop_mop"], "clean", Vector2(1400, 270), "res://assets/coop/advanced/mop_rack.png")

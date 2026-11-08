@@ -15,10 +15,12 @@ position = Vector2(0, -80)
 texture = ExtResource("1_base")
 
 [node name="PillowSlotLeft" type="Marker2D" parent="."]
-position = Vector2(-58, -84)
+position = Vector2(-58, -95)
+rotation = -0.0872665
 
 [node name="PillowSlotRight" type="Marker2D" parent="."]
-position = Vector2(58, -84)
+position = Vector2(58, -95)
+rotation = 0.0872665
 
 [node name="PlacedPillows" type="Node2D" parent="."]
 

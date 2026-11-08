@@ -254,6 +254,9 @@ func accept(player: Player) -> bool:
 			if session and "arena" in session and session.arena:
 				sofa = session.arena.get_node_or_null("YSortArena/Sofa") as Node2D
 		if is_instance_valid(sofa):
+			var slot_node = sofa.get_node_or_null("PillowSlotLeft" if target_id == "pillow_1" else "PillowSlotRight")
+			if is_instance_valid(slot_node):
+				pillow.rotation = slot_node.rotation
 			var placed_container := sofa.get_node_or_null("PlacedPillows") as Node2D
 			if is_instance_valid(placed_container):
 				var modular_pillow := Sprite2D.new()
@@ -261,6 +264,8 @@ func accept(player: Player) -> bool:
 				modular_pillow.texture = pillow.texture
 				modular_pillow.scale = pillow.scale
 				modular_pillow.position = sofa.to_local(global_position)
+				if is_instance_valid(slot_node):
+					modular_pillow.rotation = slot_node.rotation
 				placed_container.add_child(modular_pillow)
 				# Retain pillow.visible = true for test and marker compatibility
 				pillow.visible = true
